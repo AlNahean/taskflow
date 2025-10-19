@@ -10,7 +10,7 @@ interface QuickStatsProps {
 
 export function QuickStats({ tasks }: QuickStatsProps) {
   const completed = tasks.filter((t) => t.status === "completed").length
-  const inProgress = tasks.filter((t) => t.status === "in-progress").length
+  const inProgress = tasks.filter((t) => t.status === "in_progress").length
   const overdue = tasks.filter((t) => t.status === "overdue").length
 
   const stats = [

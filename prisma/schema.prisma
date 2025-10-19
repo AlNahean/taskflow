@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:./dev.db"
+}
+
+model Task {
+    id          String       @id @default(uuid())
+    title       String
+    description String?
+    status      TaskStatus   @default(todo)
+    priority    TaskPriority @default(medium)
+    category    TaskCategory @default(personal)
+    dueDate     DateTime
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+}
+
+enum TaskStatus {
+    todo
+    in_progress
+    completed
+    overdue
+}
+
+enum TaskPriority {
+    low
+    medium
+    high
+}
+
+enum TaskCategory {
+    work
+    personal
+    shopping
+    health
+    other
+}

@@ -7,18 +7,44 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useTaskStore } from "@/lib/store"
+import { useToast } from "../ui/use-toast"
 
 interface TasksTableProps {
   tasks: Task[]
   filters: Partial<Filters>
+  onTaskUpdate: () => void;
 }
 
-export function TasksTable({ tasks, filters }: TasksTableProps) {
-  const updateTask = useTaskStore((state) => state.updateTask)
+export function TasksTable({ tasks, filters, onTaskUpdate }: TasksTableProps) {
+  const { toast } = useToast()
+
+  const updateTask = async (id: string, data: Partial<Task>) => {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      toast({ title: "Success", description: "Task updated." })
+      onTaskUpdate();
+    } else {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update task." })
+    }
+  }
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
+    // Since dates from API are strings, they need to be converted to Date objects
+    const tasksWithDates = tasks.map(task => ({
+      ...task,
+      dueDate: new Date(task.dueDate),
+      createdAt: new Date(task.createdAt),
+      updatedAt: new Date(task.updatedAt)
+    }));
+
+    return tasksWithDates.filter((task) => {
       if (filters.status && filters.status.length > 0) {
         if (!filters.status.includes(task.status)) return false
       }
@@ -71,14 +97,14 @@ export function TasksTable({ tasks, filters }: TasksTableProps) {
                         checked={task.status === "completed"}
                         onCheckedChange={() => {
                           updateTask(task.id, {
-                            status: task.status === "completed" ? "todo" : "completed",
+                            status: task.status === "completed" ? "todo" : "completed"
                           })
                         }}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{task.status}</Badge>
+                      <Badge variant="outline">{task.status.replace('_', '-')}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{task.priority}</Badge>
@@ -86,7 +112,7 @@ export function TasksTable({ tasks, filters }: TasksTableProps) {
                     <TableCell>
                       <Badge variant="outline">{task.category}</Badge>
                     </TableCell>
-                    <TableCell>{format(task.dueDate, "MMM d, yyyy")}</TableCell>
+                    <TableCell>{format(new Date(task.dueDate), "MMM d, yyyy")}</TableCell>
                   </TableRow>
                 ))
               )}

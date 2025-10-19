@@ -1,12 +1,33 @@
 "use client"
 
-import { useTaskStore } from "@/lib/store"
+import { useTasks } from "@/hooks/use-tasks"
 import { TodayTasks } from "@/components/dashboard/today-tasks"
 import { QuickStats } from "@/components/dashboard/quick-stats"
 import { CalendarPreview } from "@/components/dashboard/calendar-preview"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function DashboardPage() {
-  const tasks = useTaskStore((state) => state.getTasks())
+  const { tasks, loading, fetchTasks } = useTasks()
+
+  if (loading) {
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <div>
+          <Skeleton className="h-9 w-32 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Skeleton className="h-96 lg:col-span-2" />
+          <Skeleton className="h-96 lg:col-span-1" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -29,7 +50,7 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Today's Tasks */}
         <div className="lg:col-span-2">
-          <TodayTasks tasks={tasks} />
+          <TodayTasks tasks={tasks} onTaskUpdate={fetchTasks} />
         </div>
 
         {/* Calendar Preview */}

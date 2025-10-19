@@ -1,7 +1,7 @@
 "use client"
 
 import type { Task } from "@/lib/schemas"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface CompletionChartProps {
@@ -16,7 +16,7 @@ export function CompletionChart({ tasks }: CompletionChartProps) {
     },
     {
       name: "In Progress",
-      value: tasks.filter((t) => t.status === "in-progress").length,
+      value: tasks.filter((t) => t.status === "in_progress").length,
     },
     {
       name: "Todo",
@@ -31,7 +31,8 @@ export function CompletionChart({ tasks }: CompletionChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Task Status Distribution</CardTitle>
+        <CardTitle>Status Distribution</CardTitle>
+        <CardDescription>A summary of tasks based on their current status.</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -39,7 +40,11 @@ export function CompletionChart({ tasks }: CompletionChartProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--background))",
+                borderColor: "hsl(var(--border))",
+              }} />
             <Bar dataKey="value" fill="hsl(var(--color-primary))" />
           </BarChart>
         </ResponsiveContainer>

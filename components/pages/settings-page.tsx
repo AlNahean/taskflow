@@ -3,10 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { useTaskStore } from "@/lib/store"
+import { useTasks } from "@/hooks/use-tasks"
 
 export function SettingsPageContent() {
-  const tasks = useTaskStore((state) => state.getTasks())
+  const { tasks } = useTasks()
 
   const handleExportData = () => {
     const dataStr = JSON.stringify(tasks, null, 2)

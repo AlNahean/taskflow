@@ -2,37 +2,50 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
-import { useTaskStore } from "@/lib/store"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useToast } from "../ui/use-toast"
 
 interface TaskFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onTaskCreated: () => void
 }
 
-export function TaskFormModal({ open, onOpenChange }: TaskFormModalProps) {
-  const addTask = useTaskStore((state) => state.addTask)
+export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormModalProps) {
+  const { toast } = useToast()
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
       title: "",
       description: "",
-      status: "todo",
       priority: "medium",
       category: "personal",
       dueDate: new Date(),
     },
   })
 
-  const onSubmit = (data: CreateTaskInput) => {
-    addTask(data)
-    form.reset()
-    onOpenChange(false)
+  const onSubmit = async (data: CreateTaskInput) => {
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      toast({ title: "Success", description: "Task created successfully." })
+      onTaskCreated();
+      form.reset();
+      onOpenChange(false);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
+    }
   }
 
   return (
@@ -66,7 +79,7 @@ export function TaskFormModal({ open, onOpenChange }: TaskFormModalProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Task description" {...field} />
+                    <Textarea placeholder="Task description" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

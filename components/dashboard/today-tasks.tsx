@@ -7,10 +7,11 @@ import { isToday } from "date-fns"
 
 interface TodayTasksProps {
   tasks: Task[]
+  onTaskUpdate: () => void;
 }
 
-export function TodayTasks({ tasks }: TodayTasksProps) {
-  const todayTasks = tasks.filter((task) => isToday(task.dueDate))
+export function TodayTasks({ tasks, onTaskUpdate }: TodayTasksProps) {
+  const todayTasks = tasks.filter((task) => isToday(new Date(task.dueDate)))
 
   if (todayTasks.length === 0) {
     return (
@@ -32,7 +33,7 @@ export function TodayTasks({ tasks }: TodayTasksProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {todayTasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} onTaskUpdate={onTaskUpdate} />
         ))}
       </CardContent>
     </Card>

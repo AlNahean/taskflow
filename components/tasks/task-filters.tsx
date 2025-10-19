@@ -73,14 +73,14 @@ export function TaskFilters({ onFiltersChange }: TaskFiltersProps) {
         <div>
           <label className="text-sm font-medium">Status</label>
           <div className="flex flex-wrap gap-2 mt-2">
-            {(["todo", "in-progress", "completed", "overdue"] as TaskStatus[]).map((status) => (
+            {(["todo", "in_progress", "completed", "overdue"] as TaskStatus[]).map((status) => (
               <Badge
                 key={status}
                 variant={selectedStatus.includes(status) ? "default" : "outline"}
                 className="cursor-pointer"
                 onClick={() => toggleStatus(status)}
               >
-                {status}
+                {status.replace('_', '-')}
               </Badge>
             ))}
           </div>

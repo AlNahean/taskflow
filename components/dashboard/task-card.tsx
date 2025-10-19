@@ -3,19 +3,20 @@
 import type { Task, TaskStatus } from "@/lib/schemas"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useTaskStore } from "@/lib/store"
 import { Checkbox } from "@/components/ui/checkbox"
 import { MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useToast } from "../ui/use-toast"
 
 interface TaskCardProps {
   task: Task
+  onTaskUpdate: () => void
 }
 
 const statusColors: Record<TaskStatus, string> = {
   todo: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-  "in-progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   overdue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 }
@@ -26,13 +27,38 @@ const priorityColors: Record<string, string> = {
   high: "text-red-500",
 }
 
-export function TaskCard({ task }: TaskCardProps) {
-  const updateTask = useTaskStore((state) => state.updateTask)
-  const deleteTask = useTaskStore((state) => state.deleteTask)
+export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
+  const { toast } = useToast()
+
+  const updateTask = async (data: Partial<Task>) => {
+    const response = await fetch(`/api/tasks/${task.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (response.ok) {
+      toast({ title: "Success", description: "Task updated." })
+      onTaskUpdate();
+    } else {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update task." })
+    }
+  }
+
+  const deleteTask = async () => {
+    const response = await fetch(`/api/tasks/${task.id}`, {
+      method: 'DELETE',
+    });
+    if (response.ok) {
+      toast({ title: "Success", description: "Task deleted." })
+      onTaskUpdate();
+    } else {
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete task." })
+    }
+  }
 
   const handleToggleComplete = () => {
     const newStatus: TaskStatus = task.status === "completed" ? "todo" : "completed"
-    updateTask(task.id, { status: newStatus })
+    updateTask({ status: newStatus })
   }
 
   return (
@@ -43,9 +69,8 @@ export function TaskCard({ task }: TaskCardProps) {
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p
-                className={`font-medium ${
-                  task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
-                }`}
+                className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
+                  }`}
               >
                 {task.title}
               </p>
@@ -58,12 +83,12 @@ export function TaskCard({ task }: TaskCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => deleteTask(task.id)}>Delete</DropdownMenuItem>
+                <DropdownMenuItem onClick={deleteTask}>Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
-            <Badge className={statusColors[task.status]}>{task.status}</Badge>
+            <Badge className={statusColors[task.status]}>{task.status.replace('_', '-')}</Badge>
             <Badge variant="outline" className={priorityColors[task.priority]}>
               {task.priority}
             </Badge>
