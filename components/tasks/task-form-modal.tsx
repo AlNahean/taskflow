@@ -1,13 +1,13 @@
 "use client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CreateTaskSchema, type CreateTaskInput } from "../../lib/schemas"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "../ui/input"
+import { Textarea } from "../ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 import { useToast } from "../ui/use-toast"
 
 interface TaskFormModalProps {
@@ -22,11 +22,12 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
       title: "",
-      description: "",
+      description: null,
       priority: "medium",
       category: "personal",
+      status: "todo",
       dueDate: new Date(),
-    },
+    } as CreateTaskInput, // Explicitly cast to CreateTaskInput
   })
 
   const onSubmit = async (data: CreateTaskInput) => {
@@ -88,6 +89,30 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
 
             <FormField
               control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="todo">To Do</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="priority"
               render={({ field }) => (
                 <FormItem>
@@ -95,7 +120,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select a priority" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -118,7 +143,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

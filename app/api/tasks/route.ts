@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { CreateTaskSchema } from "@/lib/schemas";
+import prisma from "../../../lib/prisma";
+import { CreateTaskSchema } from "../../../lib/schemas";
 
 export async function GET() {
   try {
@@ -21,15 +21,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // The form sends a date object which gets stringified, zod coerces it back
     const validatedData = CreateTaskSchema.parse(body);
 
-    const task = await prisma.task.create({
+    const newTask = await prisma.task.create({
       data: validatedData,
     });
-    return NextResponse.json(task, { status: 201 });
+
+    return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
-    console.error(error);
     return NextResponse.json(
       { error: "Failed to create task", details: error },
       { status: 400 }

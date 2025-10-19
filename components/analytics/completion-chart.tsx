@@ -2,11 +2,19 @@
 
 import type { Task } from "@/lib/schemas"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
 interface CompletionChartProps {
   tasks: Task[]
 }
+
+const chartConfig = {
+  value: {
+    label: "Tasks",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
 
 export function CompletionChart({ tasks }: CompletionChartProps) {
   const data = [
@@ -35,19 +43,16 @@ export function CompletionChart({ tasks }: CompletionChartProps) {
         <CardDescription>A summary of tasks based on their current status.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                borderColor: "hsl(var(--border))",
-              }} />
-            <Bar dataKey="value" fill="hsl(var(--color-primary))" />
-          </BarChart>
-        </ResponsiveContainer>
+        <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data} accessibilityLayer>
+              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="value" fill="var(--color-value)" radius={4} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   )

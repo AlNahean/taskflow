@@ -1,12 +1,15 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useTaskStore } from "@/lib/store"
+import type { Task } from "@/lib/schemas"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns"
 import { cn } from "@/lib/utils"
 
-export function CalendarPreview() {
-  const tasks = useTaskStore((state) => state.getTasks())
+interface CalendarPreviewProps {
+  tasks: Task[];
+}
+
+export function CalendarPreview({ tasks }: CalendarPreviewProps) {
   const now = new Date()
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)
@@ -14,7 +17,7 @@ export function CalendarPreview() {
 
   const tasksByDate = tasks.reduce(
     (acc, task) => {
-      const dateKey = format(task.dueDate, "yyyy-MM-dd")
+      const dateKey = format(new Date(task.dueDate), "yyyy-MM-dd")
       if (!acc[dateKey]) acc[dateKey] = []
       acc[dateKey].push(task)
       return acc
@@ -50,7 +53,7 @@ export function CalendarPreview() {
               >
                 <div>{format(day, "d")}</div>
                 {dayTasks.length > 0 && (
-                  <div className="text-xs mt-1 text-primary dark:text-blue-400">{dayTasks.length}</div>
+                  <div className="text-xs mt-1 text-primary-foreground dark:text-blue-400">{dayTasks.length}</div>
                 )}
               </div>
             )

@@ -55,7 +55,7 @@ export function DashboardPage() {
 
         {/* Calendar Preview */}
         <div className="lg:col-span-1">
-          <CalendarPreview />
+          <CalendarPreview tasks={tasks} />
         </div>
       </div>
     </div>

@@ -1,12 +1,13 @@
 "use client"
 
-import type { Task, TaskStatus } from "@/lib/schemas"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
+import type { Task, TaskStatus } from "../../lib/schemas"
+import Link from "next/link"
+import { Card } from "../ui/card"
+import { Badge } from "../ui/badge"
+import { Checkbox } from "../ui/checkbox"
 import { MoreVertical } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "../ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { useToast } from "../ui/use-toast"
 
 interface TaskCardProps {
@@ -68,17 +69,19 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p
-                className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
-                  }`}
-              >
-                {task.title}
-              </p>
-              {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
+              <Link href={`/tasks/${task.id}`}>
+                <p
+                  className={`font-medium hover:underline ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
+                    }`}
+                >
+                  {task.title}
+                </p>
+                {task.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>}
+              </Link>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
