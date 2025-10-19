@@ -1,15 +1,19 @@
-// File: E:/projects/sorties/task-management/task-manager-app/components/pages/calendar-page.tsx
 "use client"
 
 import { useState } from "react"
-import { useTasks } from "@/hooks/use-tasks"
-import { CalendarView } from "@/components/calendar/calendar-view"
-import { TasksForDate } from "@/components/calendar/tasks-for-date"
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useTasks } from "../../hooks/use-tasks"
+import { CalendarView } from "../../components/calendar/calendar-view"
+import { TasksForDate } from "../../components/calendar/tasks-for-date"
+import { Card } from "../../components/ui/card"
+import { Skeleton } from "../../components/ui/skeleton"
+import type { Task } from "../../lib/schemas"
 
-export function CalendarPageContent() {
-  const { tasks, loading, fetchTasks } = useTasks()
+interface CalendarPageContentProps {
+  initialTasks: Task[]
+}
+
+export function CalendarPageContent({ initialTasks }: CalendarPageContentProps) {
+  const { tasks, loading, fetchTasks } = useTasks(initialTasks)
   const [selectedDate, setSelectedDate] = useState(new Date())
 
   if (loading) {

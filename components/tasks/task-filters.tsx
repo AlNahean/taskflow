@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import type { TaskStatus, TaskPriority, TaskCategory, Filters } from "@/lib/schemas"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect, useCallback } from "react"
+import type { TaskStatus, TaskPriority, TaskCategory, Filters } from "../../lib/schemas"
+import { Card, CardContent } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 
 interface TaskFiltersProps {
   onFiltersChange: (filters: Partial<Filters>) => void
@@ -17,42 +16,28 @@ export function TaskFilters({ onFiltersChange }: TaskFiltersProps) {
   const [selectedPriority, setSelectedPriority] = useState<TaskPriority[]>([])
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory[]>([])
 
-  const handleFilterChange = () => {
+  const handleFilterChange = useCallback(() => {
     onFiltersChange({
       search: search || undefined,
       status: selectedStatus.length > 0 ? selectedStatus : undefined,
       priority: selectedPriority.length > 0 ? selectedPriority : undefined,
       category: selectedCategory.length > 0 ? selectedCategory : undefined,
     })
-  }
+  }, [search, selectedStatus, selectedPriority, selectedCategory, onFiltersChange])
 
-  const toggleStatus = (status: TaskStatus) => {
-    const newStatus = selectedStatus.includes(status)
-      ? selectedStatus.filter((s) => s !== status)
-      : [...selectedStatus, status]
-    setSelectedStatus(newStatus)
-  }
+  useEffect(() => {
+    handleFilterChange()
+  }, [handleFilterChange])
 
-  const togglePriority = (priority: TaskPriority) => {
-    const newPriority = selectedPriority.includes(priority)
-      ? selectedPriority.filter((p) => p !== priority)
-      : [...selectedPriority, priority]
-    setSelectedPriority(newPriority)
-  }
-
-  const toggleCategory = (category: TaskCategory) => {
-    const newCategory = selectedCategory.includes(category)
-      ? selectedCategory.filter((c) => c !== category)
-      : [...selectedCategory, category]
-    setSelectedCategory(newCategory)
-  }
-
-  const handleReset = () => {
-    setSearch("")
-    setSelectedStatus([])
-    setSelectedPriority([])
-    setSelectedCategory([])
-    onFiltersChange({})
+  const toggleFilter = <T extends string>(
+    selected: T[],
+    setSelected: React.Dispatch<React.SetStateAction<T[]>>,
+    value: T
+  ) => {
+    const newSelected = selected.includes(value)
+      ? selected.filter((s) => s !== value)
+      : [...selected, value]
+    setSelected(newSelected)
   }
 
   return (
@@ -78,7 +63,7 @@ export function TaskFilters({ onFiltersChange }: TaskFiltersProps) {
                 key={status}
                 variant={selectedStatus.includes(status) ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => toggleStatus(status)}
+                onClick={() => toggleFilter(selectedStatus, setSelectedStatus, status)}
               >
                 {status.replace('_', '-')}
               </Badge>
@@ -95,7 +80,7 @@ export function TaskFilters({ onFiltersChange }: TaskFiltersProps) {
                 key={priority}
                 variant={selectedPriority.includes(priority) ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => togglePriority(priority)}
+                onClick={() => toggleFilter(selectedPriority, setSelectedPriority, priority)}
               >
                 {priority}
               </Badge>
@@ -112,22 +97,12 @@ export function TaskFilters({ onFiltersChange }: TaskFiltersProps) {
                 key={category}
                 variant={selectedCategory.includes(category) ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => toggleCategory(category)}
+                onClick={() => toggleFilter(selectedCategory, setSelectedCategory, category)}
               >
                 {category}
               </Badge>
             ))}
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-4">
-          <Button onClick={handleFilterChange} className="flex-1">
-            Apply Filters
-          </Button>
-          <Button onClick={handleReset} variant="outline" className="flex-1 bg-transparent">
-            Reset
-          </Button>
         </div>
       </CardContent>
     </Card>

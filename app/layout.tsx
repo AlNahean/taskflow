@@ -3,9 +3,10 @@ import type { Metadata } from "next"
 
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { MainLayout } from "@/components/layout/main-layout"
-import { Providers } from "@/components/providers"
-import { Toaster } from "@/components/ui/toaster"
+import { MainLayout } from "../components/layout/main-layout"
+import { Providers } from "../components/providers"
+import { Toaster } from "../components/ui/toaster"
+import { AppProvider } from "../contexts/app-provider"
 
 import { Geist, Geist_Mono, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
@@ -29,8 +30,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <Providers>
-          <MainLayout>{children}</MainLayout>
-          <Toaster />
+          <AppProvider>
+            <MainLayout>{children}</MainLayout>
+            <Toaster />
+          </AppProvider>
         </Providers>
         <Analytics />
       </body>

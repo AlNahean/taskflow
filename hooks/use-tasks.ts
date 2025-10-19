@@ -13,13 +13,16 @@ const parseTaskDates = (task: any): Task => ({
   updatedAt: new Date(task.updatedAt),
 });
 
-export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+export function useTasks(initialTasks?: Task[]) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
+  const [loading, setLoading] = useState(!initialTasks);
   const { toast } = useToast();
 
   const fetchTasks = useCallback(async () => {
-    setLoading(true);
+    // No need to set loading to true if we already have initial tasks
+    if (!initialTasks) {
+      setLoading(true);
+    }
     try {
       const response = await fetch("/api/tasks");
       if (!response.ok) throw new Error("Failed to fetch tasks");
@@ -34,11 +37,13 @@ export function useTasks() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, initialTasks]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (!initialTasks) {
+      fetchTasks();
+    }
+  }, [fetchTasks, initialTasks]);
 
   return { tasks, loading, fetchTasks };
 }

@@ -5,8 +5,9 @@ import Link from "next/link"
 import { Card } from "../../components/ui/card"
 import { isSameDay, format } from "date-fns"
 import { Button } from "../ui/button"
-import { MoreVertical, Clock } from "lucide-react"
+import { MoreVertical, Clock, CheckCircle2 } from "lucide-react"
 import { Badge } from "../ui/badge"
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "../../components/ui/empty"
 
 interface TodayTasksProps {
   tasks: Task[]
@@ -21,8 +22,16 @@ export function TodayTasks({ tasks, onTaskUpdate, date }: TodayTasksProps) {
     <div className="space-y-4">
       <h2 className="text-lg font-semibold px-1">Tasks for {format(date, "MMMM d")}</h2>
       {tasksForDate.length === 0 ? (
-        <Card className="rounded-2xl">
-          <div className="text-center text-muted-foreground py-16">No tasks for this date.</div>
+        <Card className="rounded-2xl flex items-center justify-center h-full min-h-64">
+          <Empty>
+            <EmptyMedia variant="icon">
+              <CheckCircle2 />
+            </EmptyMedia>
+            <EmptyTitle>All Clear!</EmptyTitle>
+            <EmptyDescription>
+              You have no tasks for this day. Enjoy your time!
+            </EmptyDescription>
+          </Empty>
         </Card>
       ) : (
         <div className="space-y-3">

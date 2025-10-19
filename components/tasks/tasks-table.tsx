@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { format } from "date-fns"
 import { Checkbox } from "../ui/checkbox"
 import { useToast } from "../ui/use-toast"
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, ListX } from "lucide-react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "../../components/ui/empty"
 
 interface TasksTableProps {
   tasks: Task[]
@@ -78,28 +79,34 @@ export function TasksTable({ tasks, filters, onTaskUpdate }: TasksTableProps) {
         <CardTitle>All Tasks</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead className="w-12 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.length === 0 ? (
+        {filteredTasks.length === 0 ? (
+          <div className="py-12">
+            <Empty>
+              <EmptyMedia variant="icon">
+                <ListX />
+              </EmptyMedia>
+              <EmptyTitle>No Tasks Found</EmptyTitle>
+              <EmptyDescription>
+                No tasks match your current filters. Try adjusting your search.
+              </EmptyDescription>
+            </Empty>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No tasks found
-                  </TableCell>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead className="w-12 text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                filteredTasks.map((task) => (
+              </TableHeader>
+              <TableBody>
+                {filteredTasks.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell>
                       <Checkbox
@@ -144,11 +151,11 @@ export function TasksTable({ tasks, filters, onTaskUpdate }: TasksTableProps) {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

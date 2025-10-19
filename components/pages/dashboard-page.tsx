@@ -7,9 +7,14 @@ import { Skeleton } from "../../components/ui/skeleton"
 import { format, getWeek, isToday } from "date-fns"
 import { WeekCalendar } from "../dashboard/week-calendar"
 import { Clock, CheckCircle2 } from "lucide-react"
+import { Task } from "../../lib/schemas"
 
-export function DashboardPage() {
-  const { tasks, loading, fetchTasks } = useTasks()
+interface DashboardPageContentProps {
+  initialTasks: Task[]
+}
+
+export function DashboardPageContent({ initialTasks }: DashboardPageContentProps) {
+  const { tasks, loading, fetchTasks } = useTasks(initialTasks)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const today = new Date()
 

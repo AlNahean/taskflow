@@ -28,7 +28,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
       status: "todo",
       startDate: new Date(),
       dueDate: new Date(),
-    } as CreateTaskInput, // Explicitly cast to CreateTaskInput
+    },
   })
 
   const onSubmit = async (data: CreateTaskInput) => {
