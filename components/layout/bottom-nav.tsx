@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calendar, BarChart3, ListTodo, Home, Menu } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Calendar, BarChart3, ListTodo, Home, Menu, Bell } from "lucide-react"
+import { cn } from "../../lib/utils"
 
 interface BottomNavProps {
   onMenuClick: () => void
@@ -16,7 +16,7 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
     { href: "/", label: "Today", icon: Home },
     { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/tasks", label: "Tasks", icon: ListTodo },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/notifications", label: "Notifications", icon: Bell },
   ]
 
   return (

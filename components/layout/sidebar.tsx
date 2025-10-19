@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calendar, BarChart3, Settings, ListTodo, Home, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Calendar, BarChart3, Settings, ListTodo, Home, X, Bell } from "lucide-react"
+import { cn } from "../../lib/utils"
 import { ThemeToggle } from "./theme-toggle"
 
 interface SidebarProps {
@@ -18,6 +18,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/tasks", label: "Tasks", icon: ListTodo },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/settings", label: "Settings", icon: Settings },
   ]
 
