@@ -1,12 +1,13 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/layout/main-layout.tsx
 "use client"
 
 import { type ReactNode, useState } from "react"
 import { Sidebar } from "./sidebar"
 import { BottomNav } from "./bottom-nav"
-import { useIsMobile } from "../../hooks/use-mobile"
-import { Button } from "../../components/ui/button"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { useApp } from "../../contexts/app-provider"
+import { useApp } from "@/contexts/app-provider"
 
 export function MainLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)

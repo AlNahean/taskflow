@@ -1,13 +1,14 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/dashboard/today-tasks.tsx
 "use client"
 
-import type { Task } from "../../lib/schemas"
+import type { Task } from "@/lib/schemas"
 import Link from "next/link"
-import { Card } from "../../components/ui/card"
+import { Card } from "@/components/ui/card"
 import { isSameDay, format } from "date-fns"
 import { Button } from "../ui/button"
 import { MoreVertical, Clock, CheckCircle2 } from "lucide-react"
 import { Badge } from "../ui/badge"
-import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "../../components/ui/empty"
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 interface TodayTasksProps {
   tasks: Task[]

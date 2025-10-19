@@ -1,3 +1,4 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/tasks/tasks-table.tsx
 "use client"
 
 import type { Task, Filters } from "../../lib/schemas"
@@ -12,7 +13,7 @@ import { useToast } from "../ui/use-toast"
 import { MoreVertical, ListX } from "lucide-react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "../../components/ui/empty"
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 interface TasksTableProps {
   tasks: Task[]
@@ -132,7 +133,7 @@ export function TasksTable({ tasks, filters, onTaskUpdate }: TasksTableProps) {
                     <TableCell>
                       <Badge variant="outline">{task.category}</Badge>
                     </TableCell>
-                    <TableCell>{format(task.dueDate, "MMM d, yyyy")}</TableCell>
+                    <TableCell>{format(new Date(task.dueDate), "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

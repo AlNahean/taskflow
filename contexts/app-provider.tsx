@@ -1,8 +1,9 @@
+// File: E:/projects/sorties/task-management/task-manager-app/contexts/app-provider.tsx
 "use client"
 
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { TaskFormModal } from '../components/tasks/task-form-modal';
-import { useTasks } from '../hooks/use-tasks';
+import { TaskFormModal } from '@/components/tasks/task-form-modal';
+import { useTasks } from '@/hooks/use-tasks';
 
 interface AppContextType {
     openTaskModal: () => void;

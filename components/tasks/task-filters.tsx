@@ -1,10 +1,11 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/tasks/task-filters.tsx
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { TaskStatus, TaskPriority, TaskCategory, Filters } from "../../lib/schemas"
-import { Card, CardContent } from "../../components/ui/card"
-import { Input } from "../../components/ui/input"
-import { Badge } from "../../components/ui/badge"
+import type { TaskStatus, TaskPriority, TaskCategory, Filters } from "@/lib/schemas"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
 interface TaskFiltersProps {
   onFiltersChange: (filters: Partial<Filters>) => void

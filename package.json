@@ -9,10 +9,11 @@
     "start": "next start",
     "db:seed": "prisma db seed"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/modifiers": "^7.0.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "latest",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -79,7 +80,10 @@
     "postcss": "^8.4.38",
     "prisma": "latest",
     "tailwindcss": "^4.1.9",
-    "typescript": "^5",
-    "tsx": "^4.16.2"
+    "tsx": "^4.16.2",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

@@ -1,9 +1,10 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/tasks/task-form-modal.tsx
 "use client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateTaskSchema, type CreateTaskInput } from "../../lib/schemas"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { Button } from "../ui/button"
+import { Button } from "@/components/ui/button"
 import { Input } from "../ui/input"
 import { Textarea } from "../ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
@@ -44,7 +45,6 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
       toast({ title: "Success", description: "Task created successfully." })
       onTaskCreated();
       form.reset();
-      onOpenChange(false);
     } else {
       toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
     }
