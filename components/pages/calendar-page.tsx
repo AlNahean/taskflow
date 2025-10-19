@@ -1,3 +1,4 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/pages/calendar-page.tsx
 "use client"
 
 import { useState } from "react"
@@ -36,7 +37,11 @@ export function CalendarPageContent() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card className="p-4">
-            <CalendarView selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+            <CalendarView
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              tasks={tasks}
+            />
           </Card>
         </div>
 

@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -75,6 +79,7 @@
     "postcss": "^8.4.38",
     "prisma": "latest",
     "tailwindcss": "^4.1.9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsx": "^4.16.2"
   }
 }
