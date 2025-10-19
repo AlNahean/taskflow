@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateTaskSchema, type CreateTaskInput } from "../../lib/schemas"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Textarea } from "../ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
@@ -26,6 +26,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
       priority: "medium",
       category: "personal",
       status: "todo",
+      startDate: new Date(),
       dueDate: new Date(),
     } as CreateTaskInput, // Explicitly cast to CreateTaskInput
   })
@@ -154,6 +155,25 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
+                      onChange={(e) => field.onChange(new Date(e.target.value))}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

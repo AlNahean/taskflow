@@ -31,6 +31,7 @@ export const TaskSchema = z.object({
   status: TaskStatus,
   priority: TaskPriority,
   category: TaskCategory,
+  startDate: z.date(),
   dueDate: z.date(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -44,6 +45,7 @@ export const CreateTaskSchema = z.object({
   status: TaskStatus.default("todo"),
   priority: TaskPriority.default("medium"),
   category: TaskCategory.default("personal"),
+  startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;

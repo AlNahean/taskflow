@@ -37,6 +37,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
             const data = await response.json();
             const parsedTask = {
                 ...data,
+                startDate: new Date(data.startDate),
                 dueDate: new Date(data.dueDate),
                 createdAt: new Date(data.createdAt),
                 updatedAt: new Date(data.updatedAt),
@@ -211,6 +212,25 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                                                 <SelectItem value="other">Other</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="startDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Start Date</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="date"
+                                                {...field}
+                                                value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
+                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

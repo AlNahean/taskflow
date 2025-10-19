@@ -7,6 +7,7 @@ import { useToast } from "../components/ui/use-toast";
 // Helper to parse date strings from the API into Date objects
 const parseTaskDates = (task: any): Task => ({
   ...task,
+  startDate: new Date(task.startDate),
   dueDate: new Date(task.dueDate),
   createdAt: new Date(task.createdAt),
   updatedAt: new Date(task.updatedAt),
