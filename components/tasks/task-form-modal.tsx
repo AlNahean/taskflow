@@ -2,35 +2,52 @@
 "use client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CreateTaskSchema, type CreateTaskInput } from "../../lib/schemas"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
+import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "../ui/input"
-import { Textarea } from "../ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
-import { useToast } from "../ui/use-toast"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useToast } from "@/components/ui/use-toast"
+import { useEffect } from "react"
 
 interface TaskFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onTaskCreated: () => void
+  defaultValues?: Partial<CreateTaskInput>
 }
 
-export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormModalProps) {
+export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues }: TaskFormModalProps) {
   const { toast } = useToast()
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
-      title: "",
-      description: null,
-      priority: "medium",
-      category: "personal",
-      status: "todo",
-      startDate: new Date(),
-      dueDate: new Date(),
+      title: defaultValues?.title || "",
+      description: defaultValues?.description || null,
+      priority: defaultValues?.priority || "medium",
+      category: defaultValues?.category || "personal",
+      status: defaultValues?.status || "todo",
+      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
+      dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
     },
   })
+
+  useEffect(() => {
+    // Reset form with new default values when the modal is opened
+    if (open) {
+      form.reset({
+        title: defaultValues?.title || "",
+        description: defaultValues?.description || null,
+        priority: defaultValues?.priority || "medium",
+        category: defaultValues?.category || "personal",
+        status: defaultValues?.status || "todo",
+        startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
+        dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
+      });
+    }
+  }, [open, defaultValues, form]);
 
   const onSubmit = async (data: CreateTaskInput) => {
     const response = await fetch('/api/tasks', {
@@ -44,7 +61,6 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
     if (response.ok) {
       toast({ title: "Success", description: "Task created successfully." })
       onTaskCreated();
-      form.reset();
     } else {
       toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
     }
@@ -54,8 +70,8 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>Add a new task to your list</DialogDescription>
+          <DialogTitle>{defaultValues ? "Review & Create Task" : "Create New Task"}</DialogTitle>
+          <DialogDescription>{defaultValues ? "Adjust the details suggested by the AI." : "Add a new task to your list"}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -94,7 +110,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a status" />
@@ -118,7 +134,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Priority</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a priority" />
@@ -141,7 +157,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated }: TaskFormMod
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
