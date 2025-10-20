@@ -16,21 +16,26 @@ export function MainLayout({ children }: { children: ReactNode }) {
   const { openTaskModal } = useApp()
   const pathname = usePathname()
 
-  // Define paths where the global add button should be hidden
   const hideAddButtonOnPaths = ['/chat'];
   const shouldHideAddButton = hideAddButtonOnPaths.includes(pathname);
 
+  // This check is now primarily for client-side logic, not initial layout
+  const showDesktopSidebar = !isMobile;
+
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      {!isMobile && <Sidebar />}
+      {/* --- THIS IS THE FIX --- */}
+      {/* This container is now hidden on mobile by default using Tailwind classes */}
+      <div className="hidden md:block">
+        {showDesktopSidebar && <Sidebar />}
+      </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay (logic remains the same) */}
       {isMobile && sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar (logic remains the same) */}
       {isMobile && (
         <div
           className={`fixed left-0 top-0 z-50 h-full w-64 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -44,10 +49,9 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden relative">
         <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
 
-        {/* Conditionally render the Global Add Task Button */}
         {!shouldHideAddButton && (
           <Button
-            onClick={openTaskModal}
+            onClick={() => openTaskModal()}
             className="absolute bottom-24 right-6 h-14 w-14 rounded-full shadow-lg md:bottom-8 md:right-8"
           >
             <Plus className="h-6 w-6" />
@@ -55,7 +59,6 @@ export function MainLayout({ children }: { children: ReactNode }) {
           </Button>
         )}
 
-        {/* Bottom Navigation - Mobile Only */}
         {isMobile && <BottomNav onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
       </div>
     </div>

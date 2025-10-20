@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
+import { TaskPriority, TaskCategory } from "@/lib/schemas"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,33 +22,32 @@ interface TaskFormModalProps {
 
 export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues }: TaskFormModalProps) {
   const { toast } = useToast()
-  const form = useForm<CreateTaskInput>({
-    resolver: zodResolver(CreateTaskSchema),
-    defaultValues: {
+
+  // Function to get defaults from localStorage
+  const getDefaults = () => {
+    const savedPriority = typeof window !== 'undefined' ? localStorage.getItem("defaultPriority") as TaskPriority : "medium"
+    const savedCategory = typeof window !== 'undefined' ? localStorage.getItem("defaultCategory") as TaskCategory : "personal"
+    return {
       title: defaultValues?.title || "",
       description: defaultValues?.description || null,
-      priority: defaultValues?.priority || "medium",
-      category: defaultValues?.category || "personal",
+      priority: defaultValues?.priority || savedPriority || "medium",
+      category: defaultValues?.category || savedCategory || "personal",
       status: defaultValues?.status || "todo",
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
       dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
-    },
+    }
+  }
+
+  const form = useForm<CreateTaskInput>({
+    resolver: zodResolver(CreateTaskSchema),
+    defaultValues: getDefaults(),
   })
 
   useEffect(() => {
-    // Reset form with new default values when the modal is opened
     if (open) {
-      form.reset({
-        title: defaultValues?.title || "",
-        description: defaultValues?.description || null,
-        priority: defaultValues?.priority || "medium",
-        category: defaultValues?.category || "personal",
-        status: defaultValues?.status || "todo",
-        startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
-        dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
-      });
+      form.reset(getDefaults())
     }
-  }, [open, defaultValues, form]);
+  }, [open, defaultValues, form])
 
   const onSubmit = async (data: CreateTaskInput) => {
     const response = await fetch('/api/tasks', {
@@ -56,11 +56,12 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
-    });
+    })
 
     if (response.ok) {
       toast({ title: "Success", description: "Task created successfully." })
-      onTaskCreated();
+      onTaskCreated()
+      onOpenChange(false)
     } else {
       toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
     }

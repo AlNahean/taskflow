@@ -16,11 +16,14 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTaskData, setModalTaskData] = useState<Partial<CreateTaskInput> | undefined>(undefined);
+    const [modalKey, setModalKey] = useState(0); // Add a key state
     const { fetchTasks } = useTasks();
 
     const openTaskModal = useCallback((task?: Partial<CreateTaskInput>) => {
         setModalTaskData(task);
         setIsModalOpen(true);
+        // Increment the key to force re-mounting the modal with new defaults
+        setModalKey(prev => prev + 1);
     }, []);
 
     const refetchTasks = useCallback(() => {
@@ -36,7 +39,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         <AppContext.Provider value={{ openTaskModal, refetchTasks }}>
             {children}
             <TaskFormModal
-                key={modalTaskData ? JSON.stringify(modalTaskData) : 'new'} // Re-mount modal with new data
+                // --- THIS IS THE FIX ---
+                // Use the simple number key instead of JSON.stringify
+                key={modalKey}
                 open={isModalOpen}
                 onOpenChange={setIsModalOpen}
                 onTaskCreated={onTaskCreated}
