@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, User, Send, Cpu } from "lucide-react";
+import { Bot, User, Send } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface ChatPageContentProps {
@@ -27,7 +27,6 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
             model: model,
             data: initialDataContext,
         },
-        // This must be true to receive the token data
         experimental_streamData: true,
     });
 
@@ -47,13 +46,16 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
                         Ask questions about your tasks and notes.
                     </p>
                 </div>
-                <Select value={model} onValueChange={setModel} disabled={isLoading}>
+                {/* REMOVED disabled={isLoading} from this component */}
+                <Select value={model} onValueChange={setModel}>
                     <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                         <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -67,36 +69,21 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
                                     <p>Ask something like: "What are my most urgent tasks?"</p>
                                 </div>
                             )}
-                            {messages.map((m, index) => {
-                                // This line extracts the token data sent from the backend
-                                const tokenData = (m.data as any)?.tokens;
-
-                                return (
-                                    <div key={m.id} className="flex items-start gap-4">
-                                        <Avatar className="h-8 w-8 border">
-                                            <AvatarFallback>
-                                                {m.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="prose prose-sm dark:prose-invert max-w-none pt-1 w-full">
-                                            <p className="whitespace-pre-wrap">{m.content}</p>
-
-                                            {/* Show a blinking cursor while the AI is typing */}
-                                            {m.role === 'assistant' && isLoading && index === messages.length - 1 && (
-                                                <span className="h-4 w-1 bg-primary inline-block animate-pulse" />
-                                            )}
-
-                                            {/* Re-added this block to display the token count */}
-                                            {tokenData && (
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                                                    <Cpu className="h-3 w-3" />
-                                                    <span>{tokenData} tokens used</span>
-                                                </div>
-                                            )}
-                                        </div>
+                            {messages.map((m, index) => (
+                                <div key={m.id} className="flex items-start gap-4">
+                                    <Avatar className="h-8 w-8 border">
+                                        <AvatarFallback>
+                                            {m.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none pt-1 w-full">
+                                        <p className="whitespace-pre-wrap">{m.content}</p>
+                                        {m.role === 'assistant' && isLoading && index === messages.length - 1 && (
+                                            <span className="h-4 w-1 bg-primary inline-block animate-pulse" />
+                                        )}
                                     </div>
-                                );
-                            })}
+                                </div>
+                            ))}
                         </div>
                     </ScrollArea>
                     <form onSubmit={handleSubmit} className="flex items-center gap-2 pt-4 border-t">
