@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bot, User, Send } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useSettings, AIModel } from "@/contexts/settings-provider"; // Import from settings context
 
 interface ChatPageContentProps {
     initialDataContext: {
@@ -19,7 +20,13 @@ interface ChatPageContentProps {
 }
 
 export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
-    const [model, setModel] = React.useState("gpt-4-turbo");
+    const { defaultModel } = useSettings(); // Get the default model
+    const [model, setModel] = React.useState<AIModel>(defaultModel);
+
+    // Keep the local state in sync with the global default
+    React.useEffect(() => {
+        setModel(defaultModel);
+    }, [defaultModel]);
 
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
         api: "/api/chat",
@@ -27,7 +34,6 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
             model: model,
             data: initialDataContext,
         },
-        experimental_streamData: true,
     });
 
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
@@ -47,7 +53,7 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
                     </p>
                 </div>
                 {/* REMOVED disabled={isLoading} from this component */}
-                <Select value={model} onValueChange={setModel}>
+                <Select value={model} onValueChange={(value) => setModel(value as AIModel)}>
                     <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select a model" />
                     </SelectTrigger>

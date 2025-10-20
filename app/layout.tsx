@@ -8,6 +8,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/toaster"
 import { AppProvider } from "@/contexts/app-provider"
+import { SettingsProvider } from "@/contexts/settings-provider" // Import the new provider
 
 import { Geist, Geist_Mono, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
@@ -31,10 +32,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <Providers>
-          <AppProvider>
-            <MainLayout>{children}</MainLayout>
-            <Toaster />
-          </AppProvider>
+          <SettingsProvider> {/* Wrap AppProvider */}
+            <AppProvider>
+              <MainLayout>{children}</MainLayout>
+              <Toaster />
+            </AppProvider>
+          </SettingsProvider>
         </Providers>
         <Analytics />
       </body>

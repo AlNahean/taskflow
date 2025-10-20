@@ -12,11 +12,13 @@ import { TaskPriority, TaskCategory } from "@/lib/schemas"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
+import { useSettings, AIModel } from "@/contexts/settings-provider" // Import from settings context
 
 export function SettingsPageContent() {
   const { tasks, fetchTasks } = useTasks()
   const { toast } = useToast()
   const router = useRouter()
+  const { defaultModel, setDefaultModel } = useSettings() // Use the new context
 
   // State for default values
   const [defaultPriority, setDefaultPriority] = React.useState<TaskPriority | undefined>(undefined);
@@ -40,6 +42,11 @@ export function SettingsPageContent() {
     setDefaultCategory(value)
     localStorage.setItem("defaultCategory", value)
     toast({ title: "Default category saved!" })
+  }
+
+  const handleModelChange = (value: AIModel) => {
+    setDefaultModel(value)
+    toast({ title: "Default AI Model Saved!", description: `Your new default is ${value}.` })
   }
 
   const handleExportData = () => {
@@ -80,6 +87,31 @@ export function SettingsPageContent() {
           </CardHeader>
           <CardContent>
             <ThemeToggle />
+          </CardContent>
+        </Card>
+
+        {/* AI Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Settings</CardTitle>
+            <CardDescription>Choose your preferred AI model for chat and generation.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Default AI Model</Label>
+              <Select onValueChange={handleModelChange} value={defaultModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a default model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                  <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                  <SelectItem value="gemini-1.5-pro-latest">Gemini 1.5 Pro</SelectItem>
+                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
