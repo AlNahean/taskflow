@@ -1,117 +1,3 @@
-// import {
-//   PrismaClient,
-//   TaskStatus,
-//   TaskPriority,
-//   TaskCategory,
-// } from "@prisma/client";
-// import { addDays, subDays } from "date-fns";
-
-// const prisma = new PrismaClient();
-
-// async function main() {
-//   console.log(`Start seeding ...`);
-
-//   // Clear existing data
-//   await prisma.task.deleteMany();
-//   console.log("Deleted existing tasks.");
-
-//   const today = new Date();
-
-//   const tasks = [
-//     {
-//       title: "Finalize quarterly report",
-//       description:
-//         "Compile all department data and create the final presentation slides.",
-//       status: TaskStatus.in_progress,
-//       priority: TaskPriority.high,
-//       category: TaskCategory.work,
-//       startDate: subDays(today, 2),
-//       dueDate: addDays(today, 5),
-//     },
-//     {
-//       title: "Schedule dentist appointment",
-//       description: "Call Dr. Smith's office for a check-up.",
-//       status: TaskStatus.todo,
-//       priority: TaskPriority.medium,
-//       category: TaskCategory.health,
-//       startDate: today,
-//       dueDate: addDays(today, 10),
-//     },
-//     {
-//       title: "Buy groceries for the week",
-//       description: "Milk, eggs, bread, and vegetables.",
-//       status: TaskStatus.todo,
-//       priority: TaskPriority.medium,
-//       category: TaskCategory.shopping,
-//       startDate: today,
-//       dueDate: today,
-//     },
-//     {
-//       title: "Pay electricity bill",
-//       description: "Due by the end of the month.",
-//       status: TaskStatus.completed,
-//       priority: TaskPriority.high,
-//       category: TaskCategory.personal,
-//       startDate: subDays(today, 5),
-//       dueDate: subDays(today, 1),
-//     },
-//     {
-//       title: "Plan weekend trip",
-//       description: "Look up destinations and book accommodation.",
-//       status: TaskStatus.todo,
-//       priority: TaskPriority.low,
-//       category: TaskCategory.personal,
-//       startDate: today,
-//       dueDate: addDays(today, 14),
-//     },
-//     {
-//       title: "Submit project proposal",
-//       description:
-//         "Project Phoenix proposal needs to be submitted to the board.",
-//       status: TaskStatus.overdue,
-//       priority: TaskPriority.high,
-//       category: TaskCategory.work,
-//       startDate: subDays(today, 10),
-//       dueDate: subDays(today, 2),
-//     },
-//     {
-//       title: "Morning workout",
-//       description: "30-minute cardio session.",
-//       status: TaskStatus.completed,
-//       priority: TaskPriority.medium,
-//       category: TaskCategory.health,
-//       startDate: today,
-//       dueDate: today,
-//     },
-//     {
-//       title: 'Read a chapter of "The Pragmatic Programmer"',
-//       description: null,
-//       status: TaskStatus.in_progress,
-//       priority: TaskPriority.low,
-//       category: TaskCategory.personal,
-//       startDate: subDays(today, 1),
-//       dueDate: addDays(today, 6),
-//     },
-//   ];
-
-//   for (const task of tasks) {
-//     await prisma.task.create({
-//       data: task,
-//     });
-//   }
-
-//   console.log(`Seeding finished.`);
-// }
-
-// main()
-//   .catch((e) => {
-//     console.error(e);
-//     process.exit(1);
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect();
-//   });
-
 // File: E:/projects/sorties/task-management/task-manager-app/prisma/seed.ts
 import {
   PrismaClient,
@@ -126,12 +12,48 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(`Start seeding ...`);
 
-  // Clear existing data
+  // Clear existing data from both tables
+  await prisma.note.deleteMany();
+  console.log("Deleted existing notes.");
   await prisma.task.deleteMany();
   console.log("Deleted existing tasks.");
 
   const today = new Date();
 
+  // --- Seed Notes ---
+  console.log("Seeding notes...");
+  const notes = [
+    {
+      title: "Q4 Marketing Strategy Meeting",
+      content:
+        "Meeting recap from today:\n- Finalize the budget for the new ad campaign by next Wednesday.\n- Sarah needs to prepare the presentation slides for the client meeting in two weeks.\n- The team needs to brainstorm a new slogan for the 'Project Phoenix' launch. This is urgent.\n- Also, I need to remember to order new business cards for myself.",
+    },
+    {
+      title: "Weekend Plans & Errands",
+      content:
+        "- Must go grocery shopping tomorrow morning. Need milk, eggs, and bread.\n- The car needs its annual service, I should book an appointment for sometime next week.\n- Plan a hike for Saturday if the weather is good.\n- Finish reading 'Atomic Habits' by the end of the month.",
+    },
+    {
+      title: "Health & Fitness Goals",
+      content:
+        "Doctor's appointment is scheduled for the 5th of next month. It's a high priority check-up. I also need to refill my prescription before then. My goal is to go to the gym 3 times this week.",
+    },
+    {
+      title: "Project Ideas",
+      content:
+        "A simple idea for a new app: a personal CRM. Could start by designing the database schema and then creating the basic UI mockups. Maybe a low priority side project for now.",
+    },
+  ];
+
+  for (const note of notes) {
+    await prisma.note.create({
+      data: note,
+    });
+  }
+  console.log(`${notes.length} notes seeded.`);
+
+  // --- Seed Tasks ---
+  console.log("Seeding tasks...");
   const tasks = [
     // Work
     {
@@ -774,7 +696,7 @@ async function main() {
     },
   ];
 
-  const descriptions: Record<TaskCategory, string[]> = {
+  const descriptions: Record<TaskCategory, (string | null)[]> = {
     work: [
       "Critical for the Q3 review.",
       "Follow up with the marketing team.",
@@ -817,7 +739,6 @@ async function main() {
     arr[Math.floor(Math.random() * arr.length)];
 
   for (const task of tasks) {
-    const startDateOffset = Math.floor(Math.random() * 10) - 5; // -5 to +4 days from today
     const dueDate = addDays(today, task.daysFromNow);
     const startDate = subDays(
       dueDate,
@@ -838,6 +759,7 @@ async function main() {
       },
     });
   }
+  console.log(`${tasks.length} tasks seeded.`);
 
   console.log(`Seeding finished.`);
 }
