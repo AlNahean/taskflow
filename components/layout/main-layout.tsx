@@ -2,6 +2,7 @@
 "use client"
 
 import { type ReactNode, useState } from "react"
+import { usePathname } from "next/navigation"
 import { Sidebar } from "./sidebar"
 import { BottomNav } from "./bottom-nav"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -13,6 +14,11 @@ export function MainLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isMobile = useIsMobile()
   const { openTaskModal } = useApp()
+  const pathname = usePathname()
+
+  // Define paths where the global add button should be hidden
+  const hideAddButtonOnPaths = ['/chat'];
+  const shouldHideAddButton = hideAddButtonOnPaths.includes(pathname);
 
   return (
     <div className="flex h-screen bg-background">
@@ -38,14 +44,16 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden relative">
         <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
 
-        {/* Global Add Task Button */}
-        <Button
-          onClick={openTaskModal}
-          className="absolute bottom-24 right-6 h-14 w-14 rounded-full shadow-lg md:bottom-8 md:right-8"
-        >
-          <Plus className="h-6 w-6" />
-          <span className="sr-only">Add New Task</span>
-        </Button>
+        {/* Conditionally render the Global Add Task Button */}
+        {!shouldHideAddButton && (
+          <Button
+            onClick={openTaskModal}
+            className="absolute bottom-24 right-6 h-14 w-14 rounded-full shadow-lg md:bottom-8 md:right-8"
+          >
+            <Plus className="h-6 w-6" />
+            <span className="sr-only">Add New Task</span>
+          </Button>
+        )}
 
         {/* Bottom Navigation - Mobile Only */}
         {isMobile && <BottomNav onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}

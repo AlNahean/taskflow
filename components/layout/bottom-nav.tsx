@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calendar, ListTodo, Home, Menu, Notebook, BarChart3 } from "lucide-react"
+import { Calendar, ListTodo, Home, Menu, Notebook, BarChart3, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface BottomNavProps {
@@ -16,6 +16,7 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
     { href: "/", label: "Today", icon: Home },
     { href: "/tasks", label: "Tasks", icon: ListTodo },
     { href: "/notes", label: "Notes", icon: Notebook },
+    { href: "/chat", label: "Chat", icon: MessageSquare },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
   ]
 
@@ -24,7 +25,7 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || (item.href === "/notes" && pathname.startsWith("/notes/"))
+          const isActive = pathname === item.href || (item.href === "/notes" && pathname.startsWith("/notes/")) || (item.href === "/chat" && pathname.startsWith("/chat"))
           return (
             <Link
               key={item.href}

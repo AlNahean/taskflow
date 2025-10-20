@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calendar, BarChart3, Settings, ListTodo, Home, X, Bell, FileText, Notebook } from "lucide-react"
+import { Calendar, BarChart3, Settings, ListTodo, Home, X, Bell, FileText, Notebook, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./theme-toggle"
 
@@ -15,6 +15,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const navItems = [
     { href: "/", label: "Today", icon: Home },
+    { href: "/chat", label: "Chat", icon: MessageSquare },
     { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/tasks", label: "Tasks", icon: ListTodo },
     { href: "/notes", label: "Notes", icon: Notebook },
