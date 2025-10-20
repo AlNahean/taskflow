@@ -1,18 +1,13 @@
 "use client"
 
-import { useTasks } from "../../hooks/use-tasks"
-import { CompletionChart } from "../../components/analytics/completion-chart"
-import { CategoryChart } from "../../components/analytics/category-chart"
-import { StatsCards } from "../../components/analytics/stats-cards"
-import { Skeleton } from "../../components/ui/skeleton"
-import type { Task } from "../../lib/schemas"
+import { useAppContext } from "@/contexts/app-provider"
+import { CompletionChart } from "@/components/analytics/completion-chart"
+import { CategoryChart } from "@/components/analytics/category-chart"
+import { StatsCards } from "@/components/analytics/stats-cards"
+import { Skeleton } from "@/components/ui/skeleton"
 
-interface AnalyticsPageContentProps {
-  initialTasks: Task[]
-}
-
-export function AnalyticsPageContent({ initialTasks }: AnalyticsPageContentProps) {
-  const { tasks, loading } = useTasks(initialTasks)
+export function AnalyticsPageContent() {
+  const { tasks, loading } = useAppContext()
 
   if (loading) {
     return (

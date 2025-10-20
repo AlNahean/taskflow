@@ -2,21 +2,16 @@
 "use client"
 
 import { useState } from "react"
-import { useTasks } from "@/hooks/use-tasks"
+import { useAppContext } from "@/contexts/app-provider"
 import { TodayTasks } from "@/components/dashboard/today-tasks"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format, getWeek, isToday } from "date-fns"
 import { WeekCalendar } from "../dashboard/week-calendar"
 import { Clock, CheckCircle2 } from "lucide-react"
-import type { Task } from "@/lib/schemas"
 import { DailySummaryCard } from "../dashboard/daily-summary-card"
 
-interface DashboardPageContentProps {
-  initialTasks: Task[]
-}
-
-export function DashboardPageContent({ initialTasks }: DashboardPageContentProps) {
-  const { tasks, loading, fetchTasks } = useTasks(initialTasks)
+export function DashboardPageContent() {
+  const { tasks, loading, refetchTasks } = useAppContext()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const today = new Date()
 
@@ -33,7 +28,9 @@ export function DashboardPageContent({ initialTasks }: DashboardPageContentProps
             <Skeleton className="h-24" />
             <Skeleton className="h-48" />
           </div>
-          <Skeleton className="h-96" />
+          <div className="space-y-6">
+            <Skeleton className="h-96" />
+          </div>
         </div>
       </div>
     )
@@ -86,7 +83,7 @@ export function DashboardPageContent({ initialTasks }: DashboardPageContentProps
 
         <div className="space-y-6">
           {/* Tasks for selected date */}
-          <TodayTasks date={selectedDate} tasks={tasks} onTaskUpdate={fetchTasks} />
+          <TodayTasks date={selectedDate} tasks={tasks} onTaskUpdate={refetchTasks} />
         </div>
       </div>
     </div>

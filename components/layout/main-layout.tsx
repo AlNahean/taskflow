@@ -8,12 +8,12 @@ import { BottomNav } from "./bottom-nav"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { useApp } from "@/contexts/app-provider"
+import { useAppContext } from "@/contexts/app-provider"
 
 export function MainLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isMobile = useIsMobile()
-  const { openTaskModal } = useApp()
+  const { openTaskModal } = useAppContext()
   const pathname = usePathname()
 
   const hideAddButtonOnPaths = ['/chat'];

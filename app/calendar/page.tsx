@@ -1,18 +1,6 @@
-import { CalendarPageContent } from "@/components/pages/calendar-page"
-import prisma from "@/lib/prisma"
-import { Task } from "@/lib/schemas"
+import { CalendarPageContent } from "@/components/pages/calendar-page";
 
-const serializeTasks = (tasks: any[]): Task[] => {
-  return tasks.map(task => ({
-    ...task,
-    startDate: task.startDate.toISOString(),
-    dueDate: task.dueDate.toISOString(),
-    createdAt: task.createdAt.toISOString(),
-    updatedAt: task.updatedAt.toISOString(),
-  }));
-};
-
-export default async function CalendarPage() {
-  const tasks = await prisma.task.findMany();
-  return <CalendarPageContent initialTasks={serializeTasks(tasks)} />
+// This page is now simpler and no longer fetches data.
+export default function CalendarPage() {
+  return <CalendarPageContent />;
 }

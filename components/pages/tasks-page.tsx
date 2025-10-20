@@ -1,26 +1,49 @@
 // File: E:/projects/sorties/task-management/task-manager-app/components/pages/tasks-page.tsx
 "use client"
 
-import { useState } from "react"
-import { useTasks } from "@/hooks/use-tasks"
+import { useState, useEffect } from "react"
+import { useAppContext } from "@/contexts/app-provider"
 import { TasksTable } from "@/components/tasks/tasks-table"
 import { TaskFilters } from "@/components/tasks/task-filters"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Task } from "@/lib/schemas"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { LayoutGrid, List } from "lucide-react"
+import { LayoutGrid, List, SquareStack } from "lucide-react"
 import { TasksBoard } from "@/components/tasks/tasks-board"
+import { TasksCardView } from "@/components/tasks/tasks-card-view"
 
-interface TasksPageContentProps {
-  initialTasks: Task[]
-}
+type View = "list" | "board" | "card";
+const VIEW_STORAGE_KEY = 'task-view-preference';
 
-type View = "list" | "board"
-
-export function TasksPageContent({ initialTasks }: TasksPageContentProps) {
-  const { tasks, loading, fetchTasks } = useTasks(initialTasks)
+export function TasksPageContent() {
+  const { tasks, loading, refetchTasks } = useAppContext()
   const [filters, setFilters] = useState({})
   const [view, setView] = useState<View>("list")
+
+  useEffect(() => {
+    const savedView = localStorage.getItem(VIEW_STORAGE_KEY) as View | null;
+    if (savedView) {
+      setView(savedView);
+    }
+  }, []);
+
+  const handleViewChange = (newView: View | "") => {
+    if (newView) {
+      setView(newView);
+      localStorage.setItem(VIEW_STORAGE_KEY, newView);
+    }
+  };
+
+  const renderCurrentView = () => {
+    switch (view) {
+      case 'board':
+        return <TasksBoard tasks={tasks} filters={filters} onTaskUpdate={refetchTasks} />;
+      case 'card':
+        return <TasksCardView tasks={tasks} filters={filters} onTaskUpdate={refetchTasks} />;
+      case 'list':
+      default:
+        return <TasksTable tasks={tasks} filters={filters} onTaskUpdate={refetchTasks} />;
+    }
+  };
 
   if (loading) {
     return (
@@ -30,7 +53,7 @@ export function TasksPageContent({ initialTasks }: TasksPageContentProps) {
             <Skeleton className="h-9 w-32" />
             <Skeleton className="h-4 w-48 mt-2" />
           </div>
-          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-28" />
         </div>
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-96 w-full" />
@@ -45,23 +68,22 @@ export function TasksPageContent({ initialTasks }: TasksPageContentProps) {
           <h1 className="text-3xl font-bold text-foreground">Tasks</h1>
           <p className="text-sm text-muted-foreground">Manage all your tasks</p>
         </div>
-        <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as View)}>
+        <ToggleGroup type="single" value={view} onValueChange={handleViewChange}>
           <ToggleGroupItem value="list" aria-label="List view">
             <List className="h-4 w-4" />
           </ToggleGroupItem>
           <ToggleGroupItem value="board" aria-label="Board view">
             <LayoutGrid className="h-4 w-4" />
           </ToggleGroupItem>
+          <ToggleGroupItem value="card" aria-label="Card view">
+            <SquareStack className="h-4 w-4" />
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       <TaskFilters onFiltersChange={setFilters} />
 
-      {view === "list" ? (
-        <TasksTable tasks={tasks} filters={filters} onTaskUpdate={fetchTasks} />
-      ) : (
-        <TasksBoard tasks={tasks} filters={filters} onTaskUpdate={fetchTasks} />
-      )}
+      {renderCurrentView()}
     </div>
   )
 }

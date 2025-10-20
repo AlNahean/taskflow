@@ -1,6 +1,11 @@
 import { ChatPageContent } from "@/components/pages/chat-page";
 import prisma from "@/lib/prisma";
 
+// Disable caching for this route
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+
 // This is a Server Component that fetches all necessary data upfront
 export default async function ChatPage() {
     const tasks = await prisma.task.findMany({ orderBy: { dueDate: 'asc' } });

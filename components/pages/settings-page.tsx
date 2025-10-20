@@ -5,27 +5,25 @@ import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { useTasks } from "@/hooks/use-tasks"
+import { useAppContext } from "@/contexts/app-provider" // Correct import
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TaskPriority, TaskCategory } from "@/lib/schemas"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
-import { useSettings, AIModel } from "@/contexts/settings-provider" // Import from settings context
+import { useSettings, AIModel } from "@/contexts/settings-provider"
 
 export function SettingsPageContent() {
-  const { tasks, fetchTasks } = useTasks()
+  const { tasks } = useAppContext() // Use the global context
   const { toast } = useToast()
   const router = useRouter()
-  const { defaultModel, setDefaultModel } = useSettings() // Use the new context
+  const { defaultModel, setDefaultModel } = useSettings()
 
-  // State for default values
   const [defaultPriority, setDefaultPriority] = React.useState<TaskPriority | undefined>(undefined);
   const [defaultCategory, setDefaultCategory] = React.useState<TaskCategory | undefined>(undefined);
 
   React.useEffect(() => {
-    // Load saved defaults from localStorage on component mount
     const savedPriority = localStorage.getItem("defaultPriority") as TaskPriority | null
     const savedCategory = localStorage.getItem("defaultCategory") as TaskCategory | null
     if (savedPriority) setDefaultPriority(savedPriority)
@@ -64,7 +62,6 @@ export function SettingsPageContent() {
       const response = await fetch('/api/tasks/all', { method: 'DELETE' });
       if (!response.ok) throw new Error("Failed to delete data.");
       toast({ title: "All Data Deleted", description: "Your tasks and notes have been cleared." });
-      // We need a way to refetch all data across the app. A page reload is the simplest way.
       window.location.reload();
     } catch (error) {
       toast({ variant: "destructive", title: "Error", description: "Could not delete your data." });
@@ -79,7 +76,6 @@ export function SettingsPageContent() {
       </div>
 
       <div className="grid gap-6 max-w-2xl">
-        {/* Theme Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
@@ -90,7 +86,6 @@ export function SettingsPageContent() {
           </CardContent>
         </Card>
 
-        {/* AI Settings */}
         <Card>
           <CardHeader>
             <CardTitle>AI Settings</CardTitle>
@@ -106,7 +101,6 @@ export function SettingsPageContent() {
                 <SelectContent>
                   <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                   <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
-                  <SelectItem value="gemini-1.5-pro-latest">Gemini 1.5 Pro</SelectItem>
                   <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                   <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
                 </SelectContent>
@@ -115,7 +109,6 @@ export function SettingsPageContent() {
           </CardContent>
         </Card>
 
-        {/* Default Task Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Task Defaults</CardTitle>
@@ -153,7 +146,6 @@ export function SettingsPageContent() {
           </CardContent>
         </Card>
 
-        {/* Data Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Data Management</CardTitle>
@@ -166,7 +158,6 @@ export function SettingsPageContent() {
           </CardContent>
         </Card>
 
-        {/* Danger Zone */}
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Danger Zone</CardTitle>

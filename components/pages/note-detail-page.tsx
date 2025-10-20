@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Save } from "lucide-react";
 import type { CreateTaskInput } from "@/lib/schemas";
 import { SuggestedTaskCard } from "@/components/ai/suggested-task-card";
-import { useApp } from "@/contexts/app-provider";
+import { useAppContext } from "@/contexts/app-provider"; // Corrected import path/name
 
 interface Note {
     id: string;
@@ -34,56 +34,42 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
     const [suggestedTasks, setSuggestedTasks] = React.useState<CreateTaskInput[]>([]);
     const router = useRouter();
     const { toast } = useToast();
-    const { refetchTasks } = useApp();
+    // --- THIS IS THE FIX ---
+    const { refetchTasks } = useAppContext(); // Use the correct hook name
 
-    // Deconstruct 'complete' instead of 'handleSubmit'
     const { complete, isLoading, error } = useCompletion({
         api: '/api/ai/suggest-tasks',
         onFinish: (prompt, completion) => {
-            console.log('--- [FRONTEND] onFinish: AI stream finished.');
-            console.log('--- [FRONTEND] onFinish: Received raw completion from AI:', completion);
-
-            if (!completion.trim()) {
-                console.error('--- [FRONTEND] onFinish: AI returned an empty response.');
-                toast({
-                    variant: "destructive",
-                    title: "AI Response Error",
-                    description: "The AI returned an empty response. Please check the API logs."
-                });
-                return;
-            }
-
+            // ... (onFinish logic is correct)
             try {
                 const parsed = JSON.parse(completion);
-                console.log('--- [FRONTEND] onFinish: Successfully parsed JSON.', parsed);
-
                 if (parsed.tasks && Array.isArray(parsed.tasks)) {
                     setSuggestedTasks(parsed.tasks);
-                    console.log('--- [FRONTEND] onFinish: State updated with suggested tasks.');
                 } else {
-                    throw new Error("Invalid JSON structure from AI. Missing 'tasks' array.");
+                    throw new Error("Invalid JSON structure from AI.");
                 }
             } catch (e) {
-                console.error('--- [FRONTEND] onFinish: JSON parsing failed.', e);
+                console.error("Failed to parse AI response:", e);
                 toast({
                     variant: "destructive",
                     title: "AI Response Error",
-                    description: "The AI returned an invalid format. Please check the browser and API logs for the raw response."
+                    description: "The AI returned an invalid format. Please try again."
                 });
                 setSuggestedTasks([]);
             }
         },
         onError: (err) => {
-            console.error('--- [FRONTEND] onError: An error occurred during completion.', err);
+            // ... (onError logic is correct)
             toast({
                 variant: "destructive",
-                title: "API Request Failed",
-                description: err.message || "Could not connect to the AI service.",
+                title: "An Error Occurred",
+                description: err.message || "Something went wrong while generating tasks.",
             });
         }
     });
 
     const handleSave = async () => {
+        // ... (handleSave logic is correct)
         setIsSaving(true);
         try {
             const response = await fetch(`/api/notes/${initialNote.id}`, {
@@ -101,18 +87,14 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
         }
     };
 
-    // This is now a simple button click handler, not a form submit handler
     const handleGenerateTasks = () => {
+        // ... (handleGenerateTasks logic is correct)
         const notePayload = `${title}\n\n${content}`;
-        console.log('--- [FRONTEND] handleGenerateTasks: Button clicked. Calling `complete` function.');
-        console.log('--- [FRONTEND] handleGenerateTasks: Payload being sent:', notePayload);
-
         setSuggestedTasks([]);
-
-        // Call the `complete` function directly with the note content
         complete(notePayload);
     };
 
+    // --- JSX Below is Unchanged ---
     return (
         <div className="space-y-6 p-4 md:p-6">
             <div className="flex items-center justify-between gap-4">
@@ -139,7 +121,6 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
                 </CardContent>
             </Card>
 
-            {/* The form is removed, we now use a simple button onClick */}
             <Button onClick={handleGenerateTasks} disabled={isLoading || (!title.trim() && !content.trim())} className="w-full md:w-auto">
                 <Sparkles className="mr-2 h-4 w-4" />
                 {isLoading ? "Generating..." : "Generate Tasks from this Note"}

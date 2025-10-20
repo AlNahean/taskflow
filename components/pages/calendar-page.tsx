@@ -1,19 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { useTasks } from "../../hooks/use-tasks"
-import { CalendarView } from "../../components/calendar/calendar-view"
-import { TasksForDate } from "../../components/calendar/tasks-for-date"
-import { Card } from "../../components/ui/card"
-import { Skeleton } from "../../components/ui/skeleton"
-import type { Task } from "../../lib/schemas"
+import { useAppContext } from "@/contexts/app-provider"
+import { CalendarView } from "@/components/calendar/calendar-view"
+import { TasksForDate } from "@/components/calendar/tasks-for-date"
+import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
-interface CalendarPageContentProps {
-  initialTasks: Task[]
-}
-
-export function CalendarPageContent({ initialTasks }: CalendarPageContentProps) {
-  const { tasks, loading, fetchTasks } = useTasks(initialTasks)
+export function CalendarPageContent() {
+  const { tasks, loading, refetchTasks } = useAppContext()
   const [selectedDate, setSelectedDate] = useState(new Date())
 
   if (loading) {
@@ -50,7 +45,7 @@ export function CalendarPageContent({ initialTasks }: CalendarPageContentProps) 
         </div>
 
         <div className="lg:col-span-2">
-          <TasksForDate date={selectedDate} tasks={tasks} onTaskUpdate={fetchTasks} />
+          <TasksForDate date={selectedDate} tasks={tasks} onTaskUpdate={refetchTasks} />
         </div>
       </div>
     </div>

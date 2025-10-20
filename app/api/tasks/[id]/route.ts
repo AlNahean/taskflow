@@ -1,7 +1,10 @@
+// File: E:/projects/sorties/task-management/task-manager-app/app/api/tasks/[id]/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UpdateTaskSchema } from "@/lib/schemas";
+import { revalidatePath } from "next/cache";
 
+// ... (GET function is unchanged)
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -35,6 +38,13 @@ export async function PATCH(
       data: validatedData,
     });
 
+    // --- THIS IS THE FIX ---
+    revalidatePath("/");
+    revalidatePath("/tasks");
+    revalidatePath(`/tasks/${params.id}`);
+    revalidatePath("/calendar");
+    revalidatePath("/analytics");
+
     return NextResponse.json(updatedTask);
   } catch (error) {
     return NextResponse.json(
@@ -52,6 +62,13 @@ export async function DELETE(
     await prisma.task.delete({
       where: { id: params.id },
     });
+
+    // --- THIS IS THE FIX ---
+    revalidatePath("/");
+    revalidatePath("/tasks");
+    revalidatePath("/calendar");
+    revalidatePath("/analytics");
+
     return new NextResponse(null, { status: 204 }); // No Content
   } catch (error) {
     return NextResponse.json(

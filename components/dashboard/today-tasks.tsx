@@ -9,6 +9,7 @@ import { Button } from "../ui/button"
 import { MoreVertical, Clock, CheckCircle2 } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
+import { TaskCard } from "@/components/tasks/task-card" // Updated import path
 
 interface TodayTasksProps {
   tasks: Task[]
@@ -35,41 +36,9 @@ export function TodayTasks({ tasks, onTaskUpdate, date }: TodayTasksProps) {
           </Empty>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1  gap-3">
           {tasksForDate.map((task) => (
-            <Link href={`/tasks/${task.id}`} key={task.id} className="block">
-              <Card className="p-4 rounded-2xl hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-card-foreground truncate">{task.title}</h3>
-                    <p className="text-sm text-muted-foreground">{task.category}</p>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{task.description || "No description"}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // Dropdown menu logic would go here
-                    }}
-                  >
-                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-                <div className="flex items-center flex-wrap gap-2 mt-2">
-                  <Badge variant="outline">
-                    {format(new Date(task.dueDate), "MMM d")}
-                  </Badge>
-                  {task.status === "in_progress" && (
-                    <Badge variant="secondary">
-                      <Clock className="mr-1 h-3 w-3" />
-                      In Progress
-                    </Badge>
-                  )}
-                </div>
-              </Card>
-            </Link>
+            <TaskCard key={task.id} task={task} onTaskUpdate={onTaskUpdate} />
           ))}
         </div>
       )}

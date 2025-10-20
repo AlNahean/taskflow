@@ -1,3 +1,4 @@
+// File: E:/projects/sorties/task-management/task-manager-app/components/pages/task-edit-page.tsx
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
@@ -14,6 +15,7 @@ import { useToast } from "../ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card"
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
+import { useAppContext } from "@/contexts/app-provider" // Import the context hook
 
 interface TaskEditPageContentProps {
     taskId: string
@@ -22,6 +24,7 @@ interface TaskEditPageContentProps {
 export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const router = useRouter()
     const { toast } = useToast()
+    const { refetchTasks } = useAppContext(); // Get the global refetch function
     const [task, setTask] = useState<Task | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -30,6 +33,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     })
 
     const fetchTask = useCallback(async () => {
+        // ... (fetchTask logic remains the same)
         setLoading(true);
         try {
             const response = await fetch(`/api/tasks/${taskId}`);
@@ -69,13 +73,18 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
             if (!response.ok) throw new Error("Failed to update");
 
             toast({ title: "Success", description: "Task updated successfully." })
+
+            // --- THIS IS THE FIX ---
+            await refetchTasks(); // Trigger a global data refresh
+
             router.push("/tasks")
-            router.refresh(); // re-fetch server components
+            // No longer need router.refresh() as the state will be fresh
         } catch (error) {
             toast({ variant: "destructive", title: "Error", description: "Failed to update task." })
         }
     }
 
+    // ... (rest of the component JSX is unchanged)
     if (loading) {
         return (
             <div className="space-y-6 p-4 md:p-6">

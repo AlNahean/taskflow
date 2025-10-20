@@ -3,7 +3,7 @@
 import type { Task } from "@/lib/schemas"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TaskCard } from "@/components/dashboard/task-card"
+import { TaskCard } from "@/components/tasks/task-card"
 
 interface TasksForDateProps {
   date: Date

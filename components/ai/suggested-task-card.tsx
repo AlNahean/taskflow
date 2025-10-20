@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Edit } from "lucide-react";
-import { useApp } from "@/contexts/app-provider";
+import { useAppContext } from "@/contexts/app-provider";
 
 interface SuggestedTaskCardProps {
     task: CreateTaskInput;
@@ -16,7 +16,7 @@ interface SuggestedTaskCardProps {
 }
 
 export function SuggestedTaskCard({ task }: SuggestedTaskCardProps) {
-    const { openTaskModal } = useApp();
+    const { openTaskModal } = useAppContext();
 
     const handleReview = () => {
         // Open the global task form modal with the AI-suggested data
