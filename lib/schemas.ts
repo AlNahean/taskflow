@@ -35,6 +35,7 @@ export const TaskSchema = z.object({
   dueDate: z.date(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  starred: z.boolean(),
   suggestedTaskId: z.string().nullable().optional(),
 });
 export type Task = z.infer<typeof TaskSchema>;
@@ -58,6 +59,7 @@ export const CreateTaskSchema = z.object({
   category: TaskCategory,
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
+  starred: z.boolean().optional(),
   suggestedTaskId: z.string().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;

@@ -24,6 +24,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,6 +36,7 @@ import { useModalStore } from "@/stores/use-modal-store";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useRouter } from "next/navigation";
 import { createClientLogger } from "@/lib/logger";
+import { Switch } from "../ui/switch";
 
 const logger = createClientLogger("TaskFormModal");
 
@@ -60,6 +62,7 @@ export function TaskFormModal() {
       priority: taskModalData?.priority || savedPriority || "medium",
       category: taskModalData?.category || savedCategory || "personal",
       status: taskModalData?.status || "todo",
+      starred: taskModalData?.starred || false,
       startDate: taskModalData?.startDate
         ? new Date(taskModalData.startDate)
         : new Date(),
@@ -269,6 +272,26 @@ export function TaskFormModal() {
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="starred"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Star this task</FormLabel>
+                    <FormDescription>
+                      Starred tasks can be filtered for quick access.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

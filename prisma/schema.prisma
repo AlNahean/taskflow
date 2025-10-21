@@ -21,6 +21,7 @@ model Task {
     dueDate     DateTime
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
+    starred     Boolean      @default(false)
 
     suggestedTaskId String?        @unique // A task can optionally come from one suggestion
     suggestion      SuggestedTask? @relation(fields: [suggestedTaskId], references: [id])

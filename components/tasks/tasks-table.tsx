@@ -16,7 +16,7 @@ import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { format } from "date-fns";
 import { Checkbox } from "../ui/checkbox";
-import { MoreVertical, ListX } from "lucide-react";
+import { MoreVertical, ListX, Star } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ import {
   EmptyDescription,
 } from "@/components/ui/empty";
 import { useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
+import { cn } from "@/lib/utils";
 
 interface TasksTableProps {
   tasks: Task[];
@@ -89,6 +90,7 @@ export function TasksTable({ tasks, filters }: TasksTableProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
@@ -111,6 +113,16 @@ export function TasksTable({ tasks, filters }: TasksTableProps) {
                           });
                         }}
                       />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateTask({ id: task.id, starred: !task.starred })}
+                      >
+                        <Star className={cn("h-4 w-4", task.starred && "fill-current text-yellow-500")} />
+                      </Button>
                     </TableCell>
                     <TableCell className="font-medium">
                       <Link

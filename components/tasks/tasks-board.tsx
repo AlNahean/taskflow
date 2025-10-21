@@ -8,6 +8,10 @@ import * as Kanban from "@/components/ui/kanban"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
+import { Star } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useUpdateTask } from "@/hooks/use-tasks"
+import { Button } from "../ui/button"
 
 interface TasksBoardProps {
     tasks: Task[]
@@ -23,6 +27,7 @@ const COLUMN_TITLES: Record<TaskStatus, string> = {
 
 export function TasksBoard({ tasks: initialTasks, filters }: TasksBoardProps) {
     const { toast } = useToast()
+    const { mutate: updateTask } = useUpdateTask();
 
     const [columns, setColumns] = React.useState<Record<string, Task[]>>(() => {
         const initial: Record<string, Task[]> = {
@@ -156,9 +161,20 @@ export function TasksBoard({ tasks: initialTasks, filters }: TasksBoardProps) {
                                             <div className="rounded-md border bg-card p-3 shadow-xs">
                                                 <div className="flex flex-col gap-2">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <span className="line-clamp-2 font-medium text-sm">
+                                                        <span className="line-clamp-2 font-medium text-sm flex-1">
                                                             {task.title}
                                                         </span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 shrink-0"
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateTask({ id: task.id, starred: !task.starred }); }}
+                                                        >
+                                                            <Star className={cn("h-4 w-4", task.starred && "fill-current text-yellow-500")} />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-muted-foreground text-xs">
+                                                        <Badge variant="outline" className="text-xs">{task.category}</Badge>
                                                         <Badge
                                                             variant={
                                                                 task.priority === "high"
@@ -171,9 +187,6 @@ export function TasksBoard({ tasks: initialTasks, filters }: TasksBoardProps) {
                                                         >
                                                             {task.priority}
                                                         </Badge>
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-muted-foreground text-xs">
-                                                        <Badge variant="outline" className="text-xs">{task.category}</Badge>
                                                         <time className="text-[10px] tabular-nums">
                                                             {format(new Date(task.dueDate), "MMM d")}
                                                         </time>

@@ -10,13 +10,14 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Textarea } from "../ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "../ui/form"
 import { useToast } from "../ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card"
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
 import { useUpdateTask } from "@/hooks/use-tasks";
 import { createClientLogger } from "@/lib/logger";
+import { Switch } from "../ui/switch"
 
 const logger = createClientLogger("TaskEditPage");
 
@@ -265,6 +266,27 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                                             />
                                         </FormControl>
                                         <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="starred"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Star this task</FormLabel>
+                                            <FormDescription>
+                                                Starred tasks can be filtered for quick access.
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
                                     </FormItem>
                                 )}
                             />

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2, Star } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
 } from "../ui/dropdown-menu";
 import { format } from "date-fns";
 import { useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
+import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: Task;
@@ -37,6 +38,12 @@ export function TaskCard({ task }: TaskCardProps) {
     updateTask({ id: task.id, status: newStatus });
   };
 
+  const handleToggleStarred = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    updateTask({ id: task.id, starred: !task.starred });
+  };
+
   return (
     <Card className="p-4 hover:shadow-md transition-shadow flex flex-col h-full">
       <div className="flex items-start gap-3 flex-1">
@@ -51,8 +58,8 @@ export function TaskCard({ task }: TaskCardProps) {
               <Link href={`/tasks/${task.id}`}>
                 <p
                   className={`font-medium hover:underline ${task.status === "completed"
-                      ? "line-through text-muted-foreground"
-                      : "text-foreground"
+                    ? "line-through text-muted-foreground"
+                    : "text-foreground"
                     }`}
                 >
                   {task.title}
@@ -64,25 +71,30 @@ export function TaskCard({ task }: TaskCardProps) {
                 )}
               </Link>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/tasks/${task.id}`}>Edit</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => deleteTask(task.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleToggleStarred}>
+                <Star className={cn("h-4 w-4", task.starred && "fill-current text-yellow-500")} />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/tasks/${task.id}`}>Edit</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => deleteTask(task.id)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
