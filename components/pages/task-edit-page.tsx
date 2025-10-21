@@ -227,7 +227,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                                                 type="date"
                                                 {...field}
                                                 value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
-                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                onChange={(e) => e.target.value ? field.onChange(new Date(e.target.value + 'T00:00:00.000Z')) : field.onChange(undefined)}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -246,7 +246,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                                                 type="date"
                                                 {...field}
                                                 value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
-                                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                                onChange={(e) => e.target.value ? field.onChange(new Date(e.target.value + 'T00:00:00.000Z')) : field.onChange(undefined)}
                                             />
                                         </FormControl>
                                         <FormMessage />

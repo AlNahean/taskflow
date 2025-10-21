@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "../../../lib/prisma";
 import { CreateTaskSchema } from "../../../lib/schemas";
 import { revalidatePath } from "next/cache";
+import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +27,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const validatedData = CreateTaskSchema.parse(body);
+
+    // The suggestionId is destructured here and the rest of the properties
+    // are collected into 'taskData'.
+    const { suggestionId, ...taskData } = CreateTaskSchema.parse(body);
 
     const newTask = await prisma.task.create({
-      data: validatedData,
+      data: taskData, // Only taskData is passed to Prisma
     });
 
-    // --- THIS IS THE FIX ---
     // Invalidate the cache for pages that display tasks
     revalidatePath("/");
     revalidatePath("/tasks");
@@ -41,9 +44,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid input", details: error.issues },
+        { status: 400 }
+      );
+    }
+
+    // This will now catch the Prisma error and other unexpected errors
+    console.error("--- [API /tasks POST Error] ---", error);
     return NextResponse.json(
       { error: "Failed to create task", details: error },
-      { status: 400 }
+      { status: 500 } // Changed to 500 for server-side errors
     );
   }
 }

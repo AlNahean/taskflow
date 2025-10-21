@@ -36,6 +36,8 @@ const createTask = async (newTask: CreateTaskInput): Promise<Task> => {
     body: JSON.stringify(newTask),
   });
   if (!response.ok) {
+    const errorBody = await response.json();
+    console.error("LOG: [useCreateTask] API Error Response Body:", errorBody);
     throw new Error("Failed to create task");
   }
   return response.json();
@@ -47,11 +49,13 @@ export const useCreateTask = () => {
 
   return useMutation({
     mutationFn: createTask,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("LOG: [useCreateTask] Mutation successful:", data);
       toast({ title: "Success", description: "Task created successfully." });
       return queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("LOG: [useCreateTask] Mutation failed:", error);
       toast({
         variant: "destructive",
         title: "Error",
