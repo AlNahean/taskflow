@@ -47,6 +47,7 @@ export const CreateTaskSchema = z.object({
   category: TaskCategory.default("personal"),
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
+  suggestionId: z.string().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
@@ -66,3 +67,18 @@ export const FilterSchema = z.object({
 });
 
 export type Filters = z.infer<typeof FilterSchema>;
+
+// Suggested Task Schema
+export const SuggestedTaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  status: TaskStatus,
+  priority: TaskPriority,
+  category: TaskCategory,
+  startDate: z.date().nullable(),
+  dueDate: z.date().nullable(),
+  isAdded: z.boolean(),
+  noteId: z.string(),
+});
+export type SuggestedTask = z.infer<typeof SuggestedTaskSchema>;

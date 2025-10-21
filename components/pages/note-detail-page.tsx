@@ -1,8 +1,7 @@
-// File: E:/projects/sorties/task-management/task-manager-app/components/pages/note-detail-page.tsx
+// File: components/pages/note-detail-page.tsx
 "use client"
 
 import * as React from "react";
-import { useCompletion } from "ai/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Save } from "lucide-react";
-import type { CreateTaskInput } from "@/lib/schemas";
+import type { SuggestedTask as SuggestedTaskType } from "@/lib/schemas";
 import { SuggestedTaskCard } from "@/components/ai/suggested-task-card";
 import { useAppContext } from "@/contexts/app-provider"; // Corrected import path/name
 
@@ -21,6 +20,7 @@ interface Note {
     content: string | null;
     createdAt: string;
     updatedAt: string;
+    suggestedTasks: SuggestedTaskType[];
 }
 
 interface NoteDetailPageContentProps {
@@ -31,42 +31,12 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
     const [title, setTitle] = React.useState(initialNote.title);
     const [content, setContent] = React.useState(initialNote.content || "");
     const [isSaving, setIsSaving] = React.useState(false);
-    const [suggestedTasks, setSuggestedTasks] = React.useState<CreateTaskInput[]>([]);
+    const [suggestedTasks, setSuggestedTasks] = React.useState<SuggestedTaskType[]>(initialNote.suggestedTasks);
+    const [isGenerating, setIsGenerating] = React.useState(false);
     const router = useRouter();
     const { toast } = useToast();
     // --- THIS IS THE FIX ---
     const { refetchTasks } = useAppContext(); // Use the correct hook name
-
-    const { complete, isLoading, error } = useCompletion({
-        api: '/api/ai/suggest-tasks',
-        onFinish: (prompt, completion) => {
-            // ... (onFinish logic is correct)
-            try {
-                const parsed = JSON.parse(completion);
-                if (parsed.tasks && Array.isArray(parsed.tasks)) {
-                    setSuggestedTasks(parsed.tasks);
-                } else {
-                    throw new Error("Invalid JSON structure from AI.");
-                }
-            } catch (e) {
-                console.error("Failed to parse AI response:", e);
-                toast({
-                    variant: "destructive",
-                    title: "AI Response Error",
-                    description: "The AI returned an invalid format. Please try again."
-                });
-                setSuggestedTasks([]);
-            }
-        },
-        onError: (err) => {
-            // ... (onError logic is correct)
-            toast({
-                variant: "destructive",
-                title: "An Error Occurred",
-                description: err.message || "Something went wrong while generating tasks.",
-            });
-        }
-    });
 
     const handleSave = async () => {
         // ... (handleSave logic is correct)
@@ -87,11 +57,34 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
         }
     };
 
-    const handleGenerateTasks = () => {
-        // ... (handleGenerateTasks logic is correct)
+    const handleGenerateTasks = async () => {
+        setIsGenerating(true);
         const notePayload = `${title}\n\n${content}`;
-        setSuggestedTasks([]);
-        complete(notePayload);
+        try {
+            const response = await fetch('/api/ai/suggest-tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: notePayload, noteId: initialNote.id }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Failed to generate tasks.");
+            }
+
+            const newSuggestions = await response.json();
+            setSuggestedTasks(newSuggestions);
+            toast({ title: "Suggestions updated!", description: "Refreshed tasks based on your note." });
+        } catch (e: any) {
+            console.error("Failed to generate tasks:", e);
+            toast({
+                variant: "destructive",
+                title: "AI Generation Error",
+                description: e.message || "The AI failed to generate tasks. Please try again."
+            });
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     // --- JSX Below is Unchanged ---
@@ -121,23 +114,12 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
                 </CardContent>
             </Card>
 
-            <Button onClick={handleGenerateTasks} disabled={isLoading || (!title.trim() && !content.trim())} className="w-full md:w-auto">
+            <Button onClick={handleGenerateTasks} disabled={isGenerating || (!title.trim() && !content.trim())} className="w-full md:w-auto">
                 <Sparkles className="mr-2 h-4 w-4" />
-                {isLoading ? "Generating..." : "Generate Tasks from this Note"}
+                {isGenerating ? "Generating..." : "Generate/Update Suggested Tasks"}
             </Button>
 
-            {error && !isLoading && (
-                <Card className="bg-destructive/10 border-destructive">
-                    <CardHeader>
-                        <CardTitle className="text-destructive">Generation Failed</CardTitle>
-                        <CardDescription className="text-destructive/80">
-                            There was an issue connecting to the AI service. Please check your API key and try again.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-            )}
-
-            {isLoading && (
+            {isGenerating && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Suggested Tasks</CardTitle>
@@ -151,7 +133,7 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
                 </Card>
             )}
 
-            {suggestedTasks.length > 0 && !isLoading && (
+            {suggestedTasks.length > 0 && !isGenerating && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Suggested Tasks</CardTitle>
@@ -159,7 +141,7 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {suggestedTasks.map((task, index) => (
-                            <SuggestedTaskCard key={index} task={task} onTaskAdded={refetchTasks} />
+                            <SuggestedTaskCard key={task.id} task={task} />
                         ))}
                     </CardContent>
                 </Card>

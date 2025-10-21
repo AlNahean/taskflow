@@ -10,15 +10,31 @@ export const revalidate = 0;
 async function getNote(id: string) {
     const note = await prisma.note.findUnique({
         where: { id },
+        include: {
+            suggestedTasks: {
+                orderBy: {
+                    createdAt: 'asc'
+                }
+            }
+        }
     });
     if (!note) {
         notFound();
     }
-    return {
+    // Serialize dates for client component
+    const serializedNote = {
         ...note,
         createdAt: note.createdAt.toISOString(),
         updatedAt: note.updatedAt.toISOString(),
+        suggestedTasks: note.suggestedTasks.map(task => ({
+            ...task,
+            startDate: task.startDate?.toISOString() ?? null,
+            dueDate: task.dueDate?.toISOString() ?? null,
+            createdAt: task.createdAt.toISOString(),
+            updatedAt: task.updatedAt.toISOString(),
+        }))
     };
+    return serializedNote;
 }
 
 export default async function NoteDetailPage({ params }: { params: { id: string } }) {

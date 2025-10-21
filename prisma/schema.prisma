@@ -45,9 +45,29 @@ enum TaskCategory {
 }
 
 model Note {
-    id        String   @id @default(uuid())
-    title     String
-    content   String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id             String          @id @default(uuid())
+    title          String
+    content        String?
+    createdAt      DateTime        @default(now())
+    updatedAt      DateTime        @updatedAt
+    suggestedTasks SuggestedTask[]
+}
+
+model SuggestedTask {
+    id          String       @id @default(uuid())
+    title       String
+    description String?
+    status      TaskStatus   @default(todo)
+    priority    TaskPriority @default(medium)
+    category    TaskCategory @default(personal)
+    startDate   DateTime?
+    dueDate     DateTime?
+    isAdded     Boolean      @default(false)
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+
+    noteId String
+    note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+    @@index([noteId])
 }

@@ -1,13 +1,35 @@
-import { OpenAIStream, StreamingTextResponse } from "ai";
+// File: app/api/ai/suggest-tasks/route.ts
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import prisma from "@/lib/prisma";
+import { z } from "zod";
 
-export const runtime = "edge";
+// This route can't be edge-compatible because it needs to access the database.
+// export const runtime = "edge";
+
+// Zod schema for validating the AI's output. It's more lenient with dates.
+const AISuggestedTaskSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().max(1000).nullable().optional(),
+  status: z
+    .enum(["todo", "in_progress", "completed", "overdue"])
+    .default("todo"),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  category: z
+    .enum(["work", "personal", "shopping", "health", "other"])
+    .default("personal"),
+  startDate: z
+    .string()
+    .transform((val, ctx) => new Date(val))
+    .optional(),
+  dueDate: z.string().transform((val, ctx) => new Date(val)),
+});
 
 export async function POST(req: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return new Response(
       JSON.stringify({
-        error: "Server configuration error: The OpenAI API key is missing.",
+        error: "Server configuration error: OpenAI API key is missing.",
       }),
       { status: 500 }
     );
@@ -18,7 +40,13 @@ export async function POST(req: Request) {
   });
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, noteId } = await req.json();
+
+    if (!noteId) {
+      return new Response(JSON.stringify({ error: "noteId is required." }), {
+        status: 400,
+      });
+    }
 
     if (!prompt || prompt.length < 10) {
       return new Response(
@@ -79,19 +107,56 @@ export async function POST(req: Request) {
 
     const response = await openai.chat.completions.create({
       model: "gpt-4-turbo",
-      stream: true,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPromptWithDateContext },
       ],
       temperature: 0.3,
       max_tokens: 1500,
+      response_format: { type: "json_object" }, // Enable JSON mode
     });
 
-    const stream = OpenAIStream(response);
-    return new StreamingTextResponse(stream);
+    const completion = response.choices[0]?.message?.content;
+    if (!completion) {
+      throw new Error("AI failed to return a valid response.");
+    }
+
+    const parsedJson = JSON.parse(completion);
+    const validationSchema = z.object({
+      tasks: z.array(AISuggestedTaskSchema),
+    });
+    const validatedPayload = validationSchema.parse(parsedJson);
+    const validatedTasks = validatedPayload.tasks;
+
+    // Transaction: Delete old (un-added) suggestions and create new ones.
+    await prisma.$transaction(async (tx) => {
+      await tx.suggestedTask.deleteMany({
+        where: {
+          noteId: noteId,
+          isAdded: false,
+        },
+      });
+
+      if (validatedTasks.length > 0) {
+        await tx.suggestedTask.createMany({
+          data: validatedTasks.map((task) => ({
+            ...task,
+            description: task.description ?? null,
+            noteId: noteId,
+          })),
+        });
+      }
+    });
+
+    // Return all suggestions for the note, including previously added ones.
+    const allSuggestionsForNote = await prisma.suggestedTask.findMany({
+      where: { noteId: noteId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return NextResponse.json(allSuggestionsForNote);
   } catch (error: any) {
-    console.error("--- [API] An error occurred in the AI route:", error);
+    console.error("--- [API] An error occurred in AI suggestion route:", error);
     return new Response(
       JSON.stringify({
         error: "An internal error occurred.",

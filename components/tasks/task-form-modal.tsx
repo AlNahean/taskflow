@@ -1,5 +1,6 @@
-// File: E:/projects/sorties/task-management/task-manager-app/components/tasks/task-form-modal.tsx
+// File: components/tasks/task-form-modal.tsx
 "use client"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
@@ -22,6 +23,7 @@ interface TaskFormModalProps {
 
 export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues }: TaskFormModalProps) {
   const { toast } = useToast()
+  const router = useRouter()
 
   // Function to get defaults from localStorage
   const getDefaults = () => {
@@ -35,6 +37,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
       status: defaultValues?.status || "todo",
       startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
       dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
+      suggestionId: defaultValues?.suggestionId,
     }
   }
 
@@ -50,18 +53,41 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
   }, [open, defaultValues, form])
 
   const onSubmit = async (data: CreateTaskInput) => {
+    const { suggestionId, ...taskData } = data;
+
     const response = await fetch('/api/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(taskData),
     })
 
     if (response.ok) {
       toast({ title: "Success", description: "Task created successfully." })
+
+      let suggestionUpdated = false;
+      if (suggestionId) {
+        try {
+          const suggestionResponse = await fetch(`/api/suggested-tasks/${suggestionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isAdded: true }),
+          });
+          if (suggestionResponse.ok) {
+            suggestionUpdated = true;
+          }
+        } catch (error) {
+          console.error("Failed to mark suggestion as added:", error);
+          // This is a non-critical error, so we won't show a toast.
+        }
+      }
+
       onTaskCreated()
       onOpenChange(false)
+      if (suggestionUpdated) {
+        router.refresh(); // Refresh server props on the note page
+      }
     } else {
       toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
     }
