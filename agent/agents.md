@@ -250,3 +250,73 @@ try {
 
 This protocol ensures that debugging is efficient and that the application's logging is scalable and secure for production.
 This document supersedes all previous instructions. Adherence is required for mission success.
+
+---
+
+## SECTION 6: PROTOCOL FOR NEXT.JS 15 DYNAMIC APIS
+
+This protocol is a mandatory requirement to ensure compatibility with Next.js version 15 and beyond. It addresses the change where dynamic route parameters (`params`) are now delivered as Promises.
+
+### 6.1. Core Mandate: Asynchronous Parameter Resolution
+
+All dynamic route parameters must be treated as `Promise` objects. They **MUST** be awaited at the beginning of the function body before their properties are accessed. Direct synchronous access (e.g., `params.id`) is a critical violation and will cause runtime errors.
+
+### 6.2. Implementation for Server Components & API Routes
+
+- **Function Signature:** The function signature must be updated to type `params` as a `Promise`.
+- **Parameter Awaiting:** The `params` object must be awaited immediately, and its properties destructured into local constants.
+
+**Example Pattern:**
+
+**Before (Legacy):**
+
+```typescript
+export default async function Page({ params }: { params: { id: string } }) {
+  // Direct, synchronous access
+  const data = await fetchData(params.id);
+  return <div>{data}</div>;
+}
+```
+
+**After (Next.js 15 Compliant):**
+
+```typescript
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  // Await and destructure at the beginning
+  const { id } = await params;
+  const data = await fetchData(id);
+  return <div>{data}</div>;
+}
+```
+
+### 6.3. Implementation for Client Components
+
+- **Function Signature:** The signature must accept `params` as a `Promise`.
+- **Parameter Unwrapping:** The `React.use()` hook **MUST** be used to unwrap the `params` promise.
+
+**Example Pattern:**
+
+```typescript
+"use client";
+import { use } from "react";
+
+function TaskEditPageContent({
+  params,
+}: {
+  params: Promise<{ taskId: string }>;
+}) {
+  // Unwrap the promise using the use() hook
+  const { taskId } = use(params);
+
+  // Use the resolved `taskId` in the component logic
+  // ...
+}
+```
+
+Adherence to this protocol is critical for the stability and forward-compatibility of the application.
+
+---
