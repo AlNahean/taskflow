@@ -50,3 +50,41 @@ export const useCreateNote = () => {
     },
   });
 };
+
+// Delete a note
+const deleteNote = async (noteId: string): Promise<void> => {
+  const response = await fetch(`/api/notes/${noteId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    logger.error("Failed to delete note", { status: response.status });
+    throw new Error("Failed to delete note");
+  }
+};
+
+export const useDeleteNote = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: deleteNote,
+    onSuccess: () => {
+      logger.info("Note deletion successful.");
+      toast({
+        title: "Note Deleted",
+        description: "Your note has been successfully deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      router.push("/notes");
+    },
+    onError: (error) => {
+      logger.error("Note deletion mutation failed", { error });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete the note.",
+      });
+    },
+  });
+};

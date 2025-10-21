@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z, ZodError } from "zod";
 import { serverLogger } from "@/lib/logger";
+import { revalidatePath } from "next/cache";
 
 const noteUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
@@ -109,6 +110,7 @@ export async function DELETE(
       context,
       `[API /api/notes/[id]] Note deleted successfully`
     );
+    revalidatePath("/notes"); // Revalidate the notes list page
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     serverLogger.error(

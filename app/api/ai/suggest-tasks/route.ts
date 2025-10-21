@@ -8,6 +8,17 @@ import { serverLogger } from "@/lib/logger";
 // This route can't be edge-compatible because it needs to access the database.
 // export const runtime = "edge";
 
+// Helper function to format existing tasks for the AI prompt
+function formatExistingTasksForAI(tasks: { title: string }[]): string {
+  if (tasks.length === 0) {
+    return "No tasks have been suggested for this note yet.";
+  }
+  return (
+    "--- EXISTING SUGGESTIONS (DO NOT REPEAT THESE) ---\n" +
+    tasks.map((t) => `- ${t.title}`).join("\n")
+  );
+}
+
 // Zod schema for validating the AI's output. It's more lenient with dates.
 const AISuggestedTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -78,6 +89,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // --- ENHANCEMENT: Fetch existing suggestions to provide context to the AI ---
+    const existingSuggestions = await prisma.suggestedTask.findMany({
+      where: { noteId: noteId },
+      select: { title: true },
+    });
+    const existingTasksContext = formatExistingTasksForAI(existingSuggestions);
+
     const systemPrompt = `You are a world-class task management assistant. Your purpose is to analyze a user's note and extract a list of actionable tasks.
 
       You MUST adhere to the following rules:
@@ -85,46 +103,13 @@ export async function POST(req: Request) {
       2.  The "tasks" array must contain objects with these exact keys: "title", "description", "status", "priority", "category", "startDate", "dueDate".
       3.  'status' must always be "todo".
       4.  Your response should be a JSON object.
-      4.  Analyze the text for keywords to determine 'priority':
-          - 'urgent', 'asap', 'critical' -> "high"
-          - 'important', 'soon' -> "medium"
-          - Otherwise, default to "low".
-      5.  Analyze the text for keywords to determine 'category':
-          - 'buy', 'order', 'purchase' -> "shopping"
-          - 'doctor', 'gym', 'workout', 'appointment' -> "health"
-          - 'project', 'meeting', 'report', 'client' -> "work"
-          - Otherwise, default to "personal".
-      6.  MOST IMPORTANTLY: Analyze the text for dates. You will be given the current date for context.
-          - Convert all relative dates (e.g., 'today', 'tomorrow', 'next Friday', 'in 2 weeks', 'end of the month') into an absolute ISO 8601 date string (YYYY-MM-DDTHH:mm:ss.sssZ).
-          - If a task has only one date, use it for both 'startDate' and 'dueDate'.
-          - If a date range is implied (e.g., "work on the report this week"), set 'startDate' to the beginning of the range and 'dueDate' to the end.
-      7.  If a field cannot be inferred, provide a sensible default. 'description' can be null.
+      5.  Analyze the text for keywords to determine 'priority'.
+      6.  Analyze the text for keywords to determine 'category'.
+      7.  MOST IMPORTANTLY: Analyze the text for dates and convert them to absolute ISO 8601 date strings.
+      8.  CRITICAL: A list of existing suggestions is provided below. Identify ONLY NEW tasks from the user's note that are NOT in this list. Do not repeat or re-phrase existing suggestions. If no new tasks are found, return an empty "tasks" array.
 
-      Example:
-      User Note: "urgent meeting with the client tomorrow to review the project. also need to buy a new keyboard."
-      Your JSON Response:
-      {
-        "tasks": [
-          {
-            "title": "Meeting with client to review project",
-            "description": null,
-            "status": "todo",
-            "priority": "high",
-            "category": "work",
-            "startDate": "YYYY-MM-DDTHH:mm:ss.sssZ", // Tomorrow's date
-            "dueDate": "YYYY-MM-DDTHH:mm:ss.sssZ"   // Tomorrow's date
-          },
-          {
-            "title": "Buy a new keyboard",
-            "description": null,
-            "status": "todo",
-            "priority": "low",
-            "category": "shopping",
-            "startDate": "YYYY-MM-DDTHH:mm:ss.sssZ", // Today's date
-            "dueDate": "YYYY-MM-DDTHH:mm:ss.sssZ"   // Today's date
-          }
-        ]
-      }`;
+      ${existingTasksContext}
+      `;
 
     // Provide the current date to the AI for accurate relative date calculation
     const userPromptWithDateContext = `Based on the current date of ${new Date().toISOString()}, analyze the following note:\n\n---\n\n${prompt}`;
@@ -158,42 +143,29 @@ export async function POST(req: Request) {
       tasks: z.array(AISuggestedTaskSchema),
     });
     const validatedPayload = validationSchema.parse(parsedJson);
-    const validatedTasks = validatedPayload.tasks;
+    const newValidatedTasks = validatedPayload.tasks;
     serverLogger.info(
-      { ...context, validatedTasks: validatedTasks.length },
+      { ...context, newTasksCount: newValidatedTasks.length },
       `[API /api/ai/suggest-tasks] AI response validated`
     );
 
-    // Transaction: Delete old (un-added) suggestions and create new ones.
-    await prisma.$transaction(async (tx) => {
+    // --- ENHANCEMENT: Only add the new tasks, don't delete old ones ---
+    if (newValidatedTasks.length > 0) {
       serverLogger.info(
-        { ...context, noteId },
-        `[API /api/ai/suggest-tasks] Deleting old suggestions for note`
+        { ...context, count: newValidatedTasks.length },
+        `[API /api/ai/suggest-tasks] Creating new suggestions`
       );
-      await tx.suggestedTask.deleteMany({
-        where: {
+      await prisma.suggestedTask.createMany({
+        data: newValidatedTasks.map((task) => ({
+          ...task,
+          description: task.description ?? null,
           noteId: noteId,
-          isAdded: false,
-        },
+        })),
       });
-
-      if (validatedTasks.length > 0) {
-        serverLogger.info(
-          { ...context, count: validatedTasks.length },
-          `[API /api/ai/suggest-tasks] Creating new suggestions`
-        );
-        await tx.suggestedTask.createMany({
-          data: validatedTasks.map((task) => ({
-            ...task,
-            description: task.description ?? null,
-            noteId: noteId,
-          })),
-        });
-      }
-    });
+    }
     serverLogger.info(
       { ...context, noteId },
-      `[API /api/ai/suggest-tasks] Suggestions processed in DB`
+      `[API /api/ai/suggest-tasks] New suggestions processed in DB`
     );
 
     // Return all suggestions for the note, including previously added ones.
