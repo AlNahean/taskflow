@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-export type AIModel = 'gpt-4-turbo' | 'claude-3-opus-20240229' | 'gemini-1.5-pro-latest';
+export type AIModel = 'gpt-4-turbo' | 'claude-3-opus-20240229' | 'gemini-2.5-pro' | 'gemini-2.5-flash';
 
 interface SettingsContextType {
     defaultModel: AIModel;

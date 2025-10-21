@@ -16,6 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
 import { useUpdateTask } from "@/hooks/use-tasks";
+import { createClientLogger } from "@/lib/logger";
+
+const logger = createClientLogger("TaskEditPage");
 
 interface TaskEditPageContentProps {
     taskId: string
@@ -26,16 +29,16 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const { toast } = useToast()
     const [task, setTask] = useState<Task | null>(null)
     const [loading, setLoading] = useState(true)
-    const { mutate: updateTask } = useUpdateTask();
+    const { mutate: updateTask, isPending } = useUpdateTask();
 
     const form = useForm<UpdateTaskInput>({
         resolver: zodResolver(UpdateTaskSchema),
     })
 
     const fetchTask = useCallback(async () => {
-        // ... (fetchTask logic remains the same)
         setLoading(true);
         try {
+            logger.info(`Fetching task with ID: ${taskId}`);
             const response = await fetch(`/api/tasks/${taskId}`);
             if (!response.ok) throw new Error("Task not found");
             const data = await response.json();
@@ -51,7 +54,9 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                 ...parsedTask,
                 description: parsedTask.description ?? "",
             });
+            logger.info("Successfully fetched and parsed task.", { task: parsedTask });
         } catch (error) {
+            logger.error("Failed to load task.", { error });
             toast({ variant: "destructive", title: "Error", description: "Failed to load task." });
             setTask(null);
         } finally {
@@ -64,17 +69,27 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     }, [fetchTask]);
 
     const onSubmit = async (data: UpdateTaskInput) => {
+        logger.info("Form submitted. Calling updateTask mutation.", { taskId, data });
         updateTask(
             { id: taskId, ...data },
             {
                 onSuccess: () => {
+                    logger.info("updateTask mutation successful. Navigating to /tasks.");
+                    toast({ title: "Success", description: "Task updated successfully." });
                     router.push("/tasks");
+                },
+                onError: (error) => {
+                    logger.error("updateTask mutation failed in component.", { error });
+                    toast({
+                        variant: "destructive",
+                        title: "Update Failed",
+                        description: "Could not save your changes. Please try again.",
+                    });
                 },
             }
         );
     };
 
-    // ... (rest of the component JSX is unchanged)
     if (loading) {
         return (
             <div className="space-y-6 p-4 md:p-6">
@@ -255,8 +270,8 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                             />
 
                             <div className="flex gap-2 pt-4">
-                                <Button type="submit" className="flex-1">
-                                    Save Changes
+                                <Button type="submit" className="flex-1" disabled={isPending}>
+                                    {isPending ? "Saving..." : "Save Changes"}
                                 </Button>
                                 <Button
                                     type="button"

@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Edit, CheckCircle2 } from "lucide-react";
+import { Edit, CheckCircle2, Link as LinkIcon } from "lucide-react";
 import { useModalStore } from "@/stores/use-modal-store";
+import Link from "next/link";
 
 interface SuggestedTaskCardProps {
     // The incoming task prop will now potentially have a 'createdTask' object
@@ -31,10 +32,12 @@ export function SuggestedTaskCard({ task }: SuggestedTaskCardProps) {
         openTaskModal(modalData);
     };
 
+    const displayTitle = task.createdTask?.title || task.title;
+
     return (
         <Card className={`flex flex-col justify-between transition-all ${task.isAdded ? 'bg-muted/50 border-dashed' : ''}`}>
             <CardHeader>
-                <CardTitle className="line-clamp-2">{task.title}</CardTitle>
+                <CardTitle className="line-clamp-2">{displayTitle}</CardTitle>
                 {task.description && (
                     <CardDescription className="line-clamp-3">{task.description}</CardDescription>
                 )}
@@ -44,35 +47,33 @@ export function SuggestedTaskCard({ task }: SuggestedTaskCardProps) {
                     <Badge variant="outline">Due: {task.dueDate ? format(new Date(task.dueDate), "MMM d") : 'N/A'}</Badge>
                     <Badge variant="secondary">{task.priority}</Badge>
                     <Badge variant="secondary">{task.category}</Badge>
-                    {/* --- ADD THIS BLOCK --- */}
                     {/* If the task is added and we have its status, display it */}
                     {task.isAdded && task.createdTask && (
                         <Badge variant="default" className="capitalize">
                             Status: {task.createdTask.status.replace('_', '-')}
                         </Badge>
                     )}
-                    {/* --- END OF BLOCK --- */}
                 </div>
             </CardContent>
             <CardFooter>
-                <Button
-                    onClick={handleReview}
-                    className="w-full"
-                    disabled={task.isAdded}
-                    variant={task.isAdded ? "secondary" : "default"}
-                >
-                    {task.isAdded ? (
-                        <>
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Added to Tasks
-                        </>
-                    ) : (
-                        <>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Review & Add
-                        </>
-                    )}
-                </Button>
+                {task.isAdded && task.createdTask ? (
+                    <Button asChild className="w-full" variant="secondary">
+                        <Link href={`/tasks/${task.createdTask.id}`}>
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            View Task
+                        </Link>
+                    </Button>
+                ) : task.isAdded ? (
+                    <Button className="w-full" disabled variant="secondary">
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Added to Tasks
+                    </Button>
+                ) : (
+                    <Button onClick={handleReview} className="w-full">
+                        <Edit className="mr-2 h-4 w-4" />
+                        Review & Add
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     );

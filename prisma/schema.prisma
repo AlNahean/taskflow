@@ -22,7 +22,6 @@ model Task {
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
 
-    // ADD THIS RELATIONSHIP
     suggestedTaskId String?        @unique // A task can optionally come from one suggestion
     suggestion      SuggestedTask? @relation(fields: [suggestedTaskId], references: [id])
 }
@@ -73,7 +72,6 @@ model SuggestedTask {
     noteId String
     note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
-    // ADD THIS REVERSE RELATIONSHIP
     createdTask Task?
 
     @@index([noteId])

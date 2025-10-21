@@ -69,7 +69,7 @@ This section details the intricate relationships between the technologies used i
 2.  **Zustand (Global Client State):**
 
     - **Role:** Manages ephemeral UI state that is not persisted on the server.
-    - **Example Store (`stores/ui-store.ts`):** A store might contain state like `isTaskModalOpen`, `taskModalData`, and functions to control them (`openTaskModal`, `closeTaskModal`). Components can then subscribe to this store to share UI state without prop drilling.
+    - **Example Store (`stores/use-modal-store.ts`):** A store might contain state like `isTaskModalOpen`, `taskModalData`, and functions to control them (`openTaskModal`, `closeTaskModal`). Components can then subscribe to this store to share UI state without prop drilling.
 
 3.  **Shadcn/UI & Tailwind CSS (The Visual System):**
     - **Component Source:** All UI primitives are located in `components/ui/`.

@@ -1,7 +1,8 @@
 import { NoteDetailPageContent } from "@/components/pages/note-detail-page";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { SuggestedTask, Task } from "@/lib/schemas"; // Import Task and SuggestedTask types
+import { SuggestedTask, Task } from "@/lib/schemas";
+import { Note as PrismaNote } from "@prisma/client"; // Import Prisma's Note type
 
 // Disable caching for this route
 export const dynamic = "force-dynamic";
@@ -12,12 +13,16 @@ type SuggestedTaskWithCreatedTask = SuggestedTask & {
     createdTask: Task | null;
 };
 
-async function getNote(id: string) {
+// Define the type for the note returned by Prisma, including suggested tasks
+type NoteWithSuggestedTasks = PrismaNote & {
+    suggestedTasks: SuggestedTaskWithCreatedTask[];
+};
+
+async function getNote(id: string): Promise<NoteWithSuggestedTasks> {
     const note = await prisma.note.findUnique({
         where: { id },
         include: {
             suggestedTasks: {
-                // Also include the linked 'createdTask' for each suggestion
                 include: {
                     createdTask: true
                 },
@@ -30,36 +35,68 @@ async function getNote(id: string) {
     if (!note) {
         notFound();
     }
-    // Serialize dates for client component
-    const serializedNote = {
-        ...note,
-        createdAt: note.createdAt.toISOString(),
-        updatedAt: note.updatedAt.toISOString(),
-        suggestedTasks: note.suggestedTasks.map((task: SuggestedTaskWithCreatedTask) => ({
-            ...task,
-            startDate: task.startDate?.toISOString() ?? null,
-            dueDate: task.dueDate?.toISOString() ?? null,
-            createdAt: task.createdAt.toISOString(),
-            updatedAt: task.updatedAt.toISOString(),
-            createdTask: task.createdTask ? {
-                ...task.createdTask,
-                startDate: task.createdTask.startDate?.toISOString() ?? null,
-                dueDate: task.createdTask.dueDate?.toISOString() ?? null,
-                createdAt: task.createdTask.createdAt.toISOString(),
-                updatedAt: task.createdTask.updatedAt.toISOString(),
-            } : null,
-        }))
-    };
-    return serializedNote;
+    return note as NoteWithSuggestedTasks;
 }
+
+// Type for a Task with serialized dates
+type SerializedTask = Omit<Task, 'startDate' | 'dueDate' | 'createdAt' | 'updatedAt'> & {
+    startDate: string | null;
+    dueDate: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+// Type for the serialized suggested tasks
+type SuggestedTaskWithSerializedDates = Omit<SuggestedTaskWithCreatedTask, 'startDate' | 'dueDate' | 'createdAt' | 'updatedAt'> & {
+    startDate: string | null;
+    dueDate: string | null;
+    createdAt: string;
+    updatedAt: string;
+    createdTask: SerializedTask | null;
+};
+
+// Type for the serialized note to be passed to the client component
+type NoteForClient = Omit<PrismaNote, 'createdAt' | 'updatedAt'> & {
+    createdAt: string;
+    updatedAt: string;
+    suggestedTasks: SuggestedTaskWithSerializedDates[];
+};
+
 
 export default async function NoteDetailPage({
     params
 }: {
     params: Promise<{ id: string }>
 }) {
-    // Await params before using its properties
     const { id } = await params;
     const note = await getNote(id);
-    return <NoteDetailPageContent note={note} />;
+
+    // Serialize dates for client component
+    const serializedNote: NoteForClient = {
+        ...note,
+        createdAt: note.createdAt.toISOString(),
+        updatedAt: note.updatedAt.toISOString(),
+        suggestedTasks: note.suggestedTasks.map((task) => {
+            const { startDate, dueDate, createdAt, updatedAt, ...rest } = task;
+            return {
+                ...rest,
+                startDate: startDate?.toISOString() ?? null,
+                dueDate: dueDate?.toISOString() ?? null,
+                createdAt: createdAt.toISOString(),
+                updatedAt: updatedAt.toISOString(),
+                createdTask: task.createdTask ? (() => {
+                    const { startDate, dueDate, createdAt, updatedAt, ...createdTaskRest } = task.createdTask;
+                    return {
+                        ...createdTaskRest,
+                        startDate: startDate?.toISOString() ?? null,
+                        dueDate: dueDate?.toISOString() ?? null,
+                        createdAt: createdAt.toISOString(),
+                        updatedAt: updatedAt.toISOString(),
+                    };
+                })() : null,
+            };
+        }),
+    };
+
+    return <NoteDetailPageContent note={serializedNote} />;
 }

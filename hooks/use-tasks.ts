@@ -73,15 +73,25 @@ const updateTask = async ({
   id,
   ...data
 }: { id: string } & UpdateTaskInput): Promise<Task> => {
+  logger.info(`[mutationFn] Attempting to PATCH /api/tasks/${id}`, { data });
   const response = await fetch(`/api/tasks/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error("Failed to update task");
+    const errorBody = await response.json().catch(() => ({}));
+    logger.error("[mutationFn] API error on task update", {
+      status: response.status,
+      body: errorBody,
+    });
+    throw new Error(`Failed to update task: ${response.statusText}`);
   }
-  return response.json();
+  const responseData = await response.json();
+  logger.info("[mutationFn] Successfully updated task via API.", {
+    responseData,
+  });
+  return responseData;
 };
 
 export const useUpdateTask = () => {
@@ -100,10 +110,19 @@ export const useUpdateTask = () => {
       );
       return { previousTasks };
     },
-    onSuccess: () => {
-      toast({ title: "Success", description: "Task updated." });
+    onSuccess: (data, variables) => {
+      logger.info("[onSuccess] Hook success handler fired.", {
+        data,
+        variables,
+      });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
     },
     onError: (err, variables, context) => {
+      logger.error("[onError] Hook error handler fired.", {
+        error: err,
+        variables,
+      });
       if (context?.previousTasks) {
         queryClient.setQueryData(["tasks"], context.previousTasks);
       }
@@ -113,8 +132,12 @@ export const useUpdateTask = () => {
         description: "Failed to update task.",
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    onSettled: (data, error, variables) => {
+      logger.info("[onSettled] Hook settled handler fired.", {
+        data,
+        error,
+        variables,
+      });
     },
   });
 };
