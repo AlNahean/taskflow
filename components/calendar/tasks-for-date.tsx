@@ -8,10 +8,9 @@ import { TaskCard } from "@/components/tasks/task-card"
 interface TasksForDateProps {
   date: Date
   tasks: Task[]
-  onTaskUpdate: () => void;
 }
 
-export function TasksForDate({ date, tasks, onTaskUpdate }: TasksForDateProps) {
+export function TasksForDate({ date, tasks }: TasksForDateProps) {
   const tasksForDate = tasks.filter((task) => format(new Date(task.dueDate), "yyyy-MM-dd") === format(date, "yyyy-MM-dd"))
 
   return (
@@ -25,7 +24,7 @@ export function TasksForDate({ date, tasks, onTaskUpdate }: TasksForDateProps) {
         ) : (
           <div className="space-y-3">
             {tasksForDate.map((task) => (
-              <TaskCard key={task.id} task={task} onTaskUpdate={onTaskUpdate} />
+              <TaskCard key={task.id} task={task} />
             ))}
           </div>
         )}

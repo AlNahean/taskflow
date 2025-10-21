@@ -1,104 +1,120 @@
 // File: components/tasks/task-form-modal.tsx
-"use client"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas"
-import { TaskPriority, TaskCategory } from "@/lib/schemas"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useToast } from "@/components/ui/use-toast"
-import { useEffect } from "react"
+"use client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas";
+import { TaskPriority, TaskCategory } from "@/lib/schemas";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+import { useModalStore } from "@/stores/use-modal-store";
+import { useCreateTask } from "@/hooks/use-tasks";
+import { useRouter } from "next/navigation";
 
-interface TaskFormModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onTaskCreated: () => void
-  defaultValues?: Partial<CreateTaskInput>
-}
+export function TaskFormModal() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { isTaskModalOpen, closeTaskModal, taskModalData } = useModalStore();
+  const { mutate: createTask } = useCreateTask();
 
-export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues }: TaskFormModalProps) {
-  const { toast } = useToast()
-  const router = useRouter()
-
-  // Function to get defaults from localStorage
+  // Function to get defaults from localStorage and modal data
   const getDefaults = () => {
-    const savedPriority = typeof window !== 'undefined' ? localStorage.getItem("defaultPriority") as TaskPriority : "medium"
-    const savedCategory = typeof window !== 'undefined' ? localStorage.getItem("defaultCategory") as TaskCategory : "personal"
+    const savedPriority =
+      typeof window !== "undefined"
+        ? (localStorage.getItem("defaultPriority") as TaskPriority)
+        : "medium";
+    const savedCategory =
+      typeof window !== "undefined"
+        ? (localStorage.getItem("defaultCategory") as TaskCategory)
+        : "personal";
     return {
-      title: defaultValues?.title || "",
-      description: defaultValues?.description || null,
-      priority: defaultValues?.priority || savedPriority || "medium",
-      category: defaultValues?.category || savedCategory || "personal",
-      status: defaultValues?.status || "todo",
-      startDate: defaultValues?.startDate ? new Date(defaultValues.startDate) : new Date(),
-      dueDate: defaultValues?.dueDate ? new Date(defaultValues.dueDate) : new Date(),
-      suggestionId: defaultValues?.suggestionId,
-    }
-  }
+      title: taskModalData?.title || "",
+      description: taskModalData?.description || null,
+      priority: taskModalData?.priority || savedPriority || "medium",
+      category: taskModalData?.category || savedCategory || "personal",
+      status: taskModalData?.status || "todo",
+      startDate: taskModalData?.startDate
+        ? new Date(taskModalData.startDate)
+        : new Date(),
+      dueDate: taskModalData?.dueDate
+        ? new Date(taskModalData.dueDate)
+        : new Date(),
+      suggestionId: taskModalData?.suggestionId,
+    };
+  };
 
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: getDefaults(),
-  })
+  });
 
   useEffect(() => {
-    if (open) {
-      form.reset(getDefaults())
+    if (isTaskModalOpen) {
+      form.reset(getDefaults());
     }
-  }, [open, defaultValues, form])
+  }, [isTaskModalOpen, taskModalData, form]);
 
   const onSubmit = async (data: CreateTaskInput) => {
-    const { suggestionId, ...taskData } = data;
-
-    const response = await fetch('/api/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(taskData),
-    })
-
-    if (response.ok) {
-      toast({ title: "Success", description: "Task created successfully." })
-
-      let suggestionUpdated = false;
-      if (suggestionId) {
-        try {
-          const suggestionResponse = await fetch(`/api/suggested-tasks/${suggestionId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isAdded: true }),
-          });
-          if (suggestionResponse.ok) {
-            suggestionUpdated = true;
+    createTask(data, {
+      onSuccess: async () => {
+        closeTaskModal();
+        if (data.suggestionId) {
+          try {
+            const suggestionResponse = await fetch(
+              `/api/suggested-tasks/${data.suggestionId}`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isAdded: true }),
+              }
+            );
+            if (suggestionResponse.ok) {
+              router.refresh(); // Refresh note page to update suggestion state
+            }
+          } catch (error) {
+            console.error("Failed to mark suggestion as added:", error);
           }
-        } catch (error) {
-          console.error("Failed to mark suggestion as added:", error);
-          // This is a non-critical error, so we won't show a toast.
         }
-      }
-
-      onTaskCreated()
-      onOpenChange(false)
-      if (suggestionUpdated) {
-        router.refresh(); // Refresh server props on the note page
-      }
-    } else {
-      toast({ variant: "destructive", title: "Error", description: "Failed to create task." })
-    }
-  }
+      },
+    });
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isTaskModalOpen} onOpenChange={closeTaskModal}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? "Review & Create Task" : "Create New Task"}</DialogTitle>
-          <DialogDescription>{defaultValues ? "Adjust the details suggested by the AI." : "Add a new task to your list"}</DialogDescription>
+          <DialogTitle>
+            {taskModalData ? "Review & Create Task" : "Create New Task"}
+          </DialogTitle>
+          <DialogDescription>
+            {taskModalData
+              ? "Adjust the details suggested by the AI."
+              : "Add a new task to your list"}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -124,7 +140,11 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Task description" {...field} value={field.value ?? ""} />
+                    <Textarea
+                      placeholder="Task description"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -213,7 +233,11 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
                     <Input
                       type="date"
                       {...field}
-                      value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
+                      value={
+                        field.value instanceof Date
+                          ? field.value.toISOString().split("T")[0]
+                          : ""
+                      }
                       onChange={(e) => field.onChange(new Date(e.target.value))}
                     />
                   </FormControl>
@@ -232,7 +256,11 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
                     <Input
                       type="date"
                       {...field}
-                      value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
+                      value={
+                        field.value instanceof Date
+                          ? field.value.toISOString().split("T")[0]
+                          : ""
+                      }
                       onChange={(e) => field.onChange(new Date(e.target.value))}
                     />
                   </FormControl>
@@ -249,7 +277,7 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
                 type="button"
                 variant="outline"
                 className="flex-1 bg-transparent"
-                onClick={() => onOpenChange(false)}
+                onClick={closeTaskModal}
               >
                 Cancel
               </Button>
@@ -258,5 +286,5 @@ export function TaskFormModal({ open, onOpenChange, onTaskCreated, defaultValues
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

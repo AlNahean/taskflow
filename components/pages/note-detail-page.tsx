@@ -12,7 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Save } from "lucide-react";
 import type { SuggestedTask as SuggestedTaskType } from "@/lib/schemas";
 import { SuggestedTaskCard } from "@/components/ai/suggested-task-card";
-import { useAppContext } from "@/contexts/app-provider"; // Corrected import path/name
+
+interface SuggestedTaskWithParsedDates extends Omit<SuggestedTaskType, 'startDate' | 'dueDate'> {
+    startDate: string | null;
+    dueDate: string | null;
+}
 
 interface Note {
     id: string;
@@ -20,7 +24,7 @@ interface Note {
     content: string | null;
     createdAt: string;
     updatedAt: string;
-    suggestedTasks: SuggestedTaskType[];
+    suggestedTasks: SuggestedTaskWithParsedDates[];
 }
 
 interface NoteDetailPageContentProps {
@@ -31,12 +35,16 @@ export function NoteDetailPageContent({ note: initialNote }: NoteDetailPageConte
     const [title, setTitle] = React.useState(initialNote.title);
     const [content, setContent] = React.useState(initialNote.content || "");
     const [isSaving, setIsSaving] = React.useState(false);
-    const [suggestedTasks, setSuggestedTasks] = React.useState<SuggestedTaskType[]>(initialNote.suggestedTasks);
+    const [suggestedTasks, setSuggestedTasks] = React.useState<SuggestedTaskType[]>(
+        initialNote.suggestedTasks.map(task => ({
+            ...task,
+            startDate: task.startDate ? new Date(task.startDate) : null,
+            dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        }))
+    );
     const [isGenerating, setIsGenerating] = React.useState(false);
     const router = useRouter();
     const { toast } = useToast();
-    // --- THIS IS THE FIX ---
-    const { refetchTasks } = useAppContext(); // Use the correct hook name
 
     const handleSave = async () => {
         // ... (handleSave logic is correct)

@@ -8,13 +8,13 @@ import { BottomNav } from "./bottom-nav"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { useAppContext } from "@/contexts/app-provider"
+import { useModalStore } from "@/stores/use-modal-store";
 
 export function MainLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isMobile = useIsMobile()
-  const { openTaskModal } = useAppContext()
-  const pathname = usePathname()
+  const { openTaskModal } = useModalStore();
+  const pathname = usePathname();
 
   const hideAddButtonOnPaths = ['/chat'];
   const shouldHideAddButton = hideAddButtonOnPaths.includes(pathname);

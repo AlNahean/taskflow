@@ -1,17 +1,18 @@
-"use client"
+// File: components/pages/calendar-page.tsx
+"use client";
 
-import { useState } from "react"
-import { useAppContext } from "@/contexts/app-provider"
-import { CalendarView } from "@/components/calendar/calendar-view"
-import { TasksForDate } from "@/components/calendar/tasks-for-date"
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useState } from "react";
+import { useTasks } from "@/hooks/use-tasks";
+import { CalendarView } from "@/components/calendar/calendar-view";
+import { TasksForDate } from "@/components/calendar/tasks-for-date";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function CalendarPageContent() {
-  const { tasks, loading, refetchTasks } = useAppContext()
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  const { data: tasks = [], isLoading } = useTasks();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-6">
         <div>
@@ -23,14 +24,16 @@ export function CalendarPageContent() {
           <Skeleton className="h-[25rem] lg:col-span-2" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
-        <p className="text-sm text-muted-foreground">View and manage tasks by date</p>
+        <p className="text-sm text-muted-foreground">
+          View and manage tasks by date
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -45,9 +48,9 @@ export function CalendarPageContent() {
         </div>
 
         <div className="lg:col-span-2">
-          <TasksForDate date={selectedDate} tasks={tasks} onTaskUpdate={refetchTasks} />
+          <TasksForDate date={selectedDate} tasks={tasks} />
         </div>
       </div>
     </div>
-  )
+  );
 }

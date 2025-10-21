@@ -5,7 +5,7 @@ import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { useAppContext } from "@/contexts/app-provider" // Correct import
+import { useTasks } from "@/hooks/use-tasks"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TaskPriority, TaskCategory } from "@/lib/schemas"
@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation"
 import { useSettings, AIModel } from "@/contexts/settings-provider"
 
 export function SettingsPageContent() {
-  const { tasks } = useAppContext() // Use the global context
+  const { data: tasks = [] } = useTasks() // Use the global context
   const { toast } = useToast()
   const router = useRouter()
   const { defaultModel, setDefaultModel } = useSettings()

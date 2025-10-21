@@ -9,10 +9,9 @@ import { ListX } from "lucide-react"
 interface TasksCardViewProps {
     tasks: Task[]
     filters: Partial<Filters>
-    onTaskUpdate: () => void;
 }
 
-export function TasksCardView({ tasks, filters, onTaskUpdate }: TasksCardViewProps) {
+export function TasksCardView({ tasks, filters }: TasksCardViewProps) {
     const filteredTasks = useMemo(() => {
         return tasks.filter((task) => {
             if (filters.status && filters.status.length > 0) {
@@ -53,7 +52,7 @@ export function TasksCardView({ tasks, filters, onTaskUpdate }: TasksCardViewPro
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onTaskUpdate={onTaskUpdate} />
+                <TaskCard key={task.id} task={task} />
             ))}
         </div>
     )

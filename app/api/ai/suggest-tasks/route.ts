@@ -1,6 +1,6 @@
 // File: app/api/ai/suggest-tasks/route.ts
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       1.  Your entire response MUST be a single, valid JSON object: { "tasks": [...] }. Do NOT include any markdown, explanations, or other text.
       2.  The "tasks" array must contain objects with these exact keys: "title", "description", "status", "priority", "category", "startDate", "dueDate".
       3.  'status' must always be "todo".
+      4.  Your response should be a JSON object.
       4.  Analyze the text for keywords to determine 'priority':
           - 'urgent', 'asap', 'critical' -> "high"
           - 'important', 'soon' -> "medium"

@@ -1,15 +1,16 @@
-"use client"
+// File: components/pages/analytics-page.tsx
+"use client";
 
-import { useAppContext } from "@/contexts/app-provider"
-import { CompletionChart } from "@/components/analytics/completion-chart"
-import { CategoryChart } from "@/components/analytics/category-chart"
-import { StatsCards } from "@/components/analytics/stats-cards"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useTasks } from "@/hooks/use-tasks";
+import { CompletionChart } from "@/components/analytics/completion-chart";
+import { CategoryChart } from "@/components/analytics/category-chart";
+import { StatsCards } from "@/components/analytics/stats-cards";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function AnalyticsPageContent() {
-  const { tasks, loading } = useAppContext()
+  const { data: tasks = [], isLoading } = useTasks();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-6">
         <div>
@@ -26,14 +27,16 @@ export function AnalyticsPageContent() {
           <Skeleton className="h-80" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
-        <p className="text-sm text-muted-foreground">Track your task productivity</p>
+        <p className="text-sm text-muted-foreground">
+          Track your task productivity
+        </p>
       </div>
 
       <StatsCards tasks={tasks} />
@@ -43,5 +46,5 @@ export function AnalyticsPageContent() {
         <CategoryChart tasks={tasks} />
       </div>
     </div>
-  )
+  );
 }

@@ -12,7 +12,6 @@ import Link from "next/link"
 interface TasksBoardProps {
     tasks: Task[]
     filters: Partial<Filters>
-    onTaskUpdate: () => void;
 }
 
 const COLUMN_TITLES: Record<TaskStatus, string> = {
@@ -22,7 +21,7 @@ const COLUMN_TITLES: Record<TaskStatus, string> = {
     overdue: "Overdue",
 };
 
-export function TasksBoard({ tasks: initialTasks, filters, onTaskUpdate }: TasksBoardProps) {
+export function TasksBoard({ tasks: initialTasks, filters }: TasksBoardProps) {
     const { toast } = useToast()
 
     const [columns, setColumns] = React.useState<Record<string, Task[]>>(() => {
@@ -119,7 +118,6 @@ export function TasksBoard({ tasks: initialTasks, filters, onTaskUpdate }: Tasks
                 if (!response.ok) throw new Error("Failed to update task status");
 
                 toast({ title: "Success", description: `Task moved to ${COLUMN_TITLES[newStatus]}.` })
-                onTaskUpdate();
             } catch (error) {
                 setColumns(oldColumns); // Revert on failure
                 toast({ variant: "destructive", title: "Error", description: "Failed to update task status." })
@@ -134,7 +132,6 @@ export function TasksBoard({ tasks: initialTasks, filters, onTaskUpdate }: Tasks
                 value={columns}
                 onValueChange={handleValueChange}
                 getItemValue={(item) => item.id}
-                className="min-w-max"
             >
                 <Kanban.Board className="grid grid-cols-4 gap-4 auto-rows-fr">
                     {Object.entries(columns).map(([columnValue, tasks]) => (

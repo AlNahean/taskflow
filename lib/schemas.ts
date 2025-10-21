@@ -42,9 +42,9 @@ export type Task = z.infer<typeof TaskSchema>;
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).nullable().optional(),
-  status: TaskStatus.default("todo"),
-  priority: TaskPriority.default("medium"),
-  category: TaskCategory.default("personal"),
+  status: TaskStatus,
+  priority: TaskPriority,
+  category: TaskCategory,
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
   suggestionId: z.string().optional(),

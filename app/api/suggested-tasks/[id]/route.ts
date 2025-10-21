@@ -12,11 +12,12 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
     const body = await request.json();
     const validatedData = updateSchema.parse(body);
 
     const updatedSuggestion = await prisma.suggestedTask.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         isAdded: validatedData.isAdded,
       },

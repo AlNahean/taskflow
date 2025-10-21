@@ -13,11 +13,10 @@ import { TaskCard } from "@/components/tasks/task-card" // Updated import path
 
 interface TodayTasksProps {
   tasks: Task[]
-  onTaskUpdate: () => void;
   date: Date
 }
 
-export function TodayTasks({ tasks, onTaskUpdate, date }: TodayTasksProps) {
+export function TodayTasks({ tasks, date }: TodayTasksProps) {
   const tasksForDate = tasks.filter((task) => isSameDay(new Date(task.dueDate), date))
 
   return (
@@ -38,7 +37,7 @@ export function TodayTasks({ tasks, onTaskUpdate, date }: TodayTasksProps) {
       ) : (
         <div className="grid grid-cols-1  gap-3">
           {tasksForDate.map((task) => (
-            <TaskCard key={task.id} task={task} onTaskUpdate={onTaskUpdate} />
+            <TaskCard key={task.id} task={task} />
           ))}
         </div>
       )}

@@ -1,21 +1,21 @@
-// File: E:/projects/sorties/task-management/task-manager-app/components/pages/dashboard-page.tsx
-"use client"
+// File: components/pages/dashboard-page.tsx
+"use client";
 
-import { useState } from "react"
-import { useAppContext } from "@/contexts/app-provider"
-import { TodayTasks } from "@/components/dashboard/today-tasks"
-import { Skeleton } from "@/components/ui/skeleton"
-import { format, getWeek, isToday } from "date-fns"
-import { WeekCalendar } from "../dashboard/week-calendar"
-import { Clock, CheckCircle2 } from "lucide-react"
-import { DailySummaryCard } from "../dashboard/daily-summary-card"
+import { useState } from "react";
+import { TodayTasks } from "@/components/dashboard/today-tasks";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format, getWeek, isToday } from "date-fns";
+import { WeekCalendar } from "../dashboard/week-calendar";
+import { Clock, CheckCircle2 } from "lucide-react";
+import { DailySummaryCard } from "../dashboard/daily-summary-card";
+import { useTasks } from "@/hooks/use-tasks";
 
 export function DashboardPageContent() {
-  const { tasks, loading, refetchTasks } = useAppContext()
-  const [selectedDate, setSelectedDate] = useState(new Date())
-  const today = new Date()
+  const { data: tasks = [], isLoading } = useTasks();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const today = new Date();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-6">
         <div>
@@ -33,11 +33,13 @@ export function DashboardPageContent() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const completedToday = tasks.filter(t => t.status === 'completed' && isToday(new Date(t.updatedAt))).length;
-  const inProgress = tasks.filter(t => t.status === 'in_progress').length;
+  const completedToday = tasks.filter(
+    (t) => t.status === "completed" && isToday(new Date(t.updatedAt))
+  ).length;
+  const inProgress = tasks.filter((t) => t.status === "in_progress").length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -53,14 +55,18 @@ export function DashboardPageContent() {
         <div className="space-y-6">
           {/* Hero Card */}
           <div className="relative overflow-hidden rounded-3xl bg-card p-6 text-card-foreground shadow-lg">
-            <img src="/placeholder.jpg" alt="Autumn leaves" className="absolute inset-0 h-full w-full object-cover opacity-20 dark:opacity-10" />
+            <img
+              src="/placeholder.jpg"
+              alt="Autumn leaves"
+              className="absolute inset-0 h-full w-full object-cover opacity-20 dark:opacity-10"
+            />
             <div className="relative flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium">{format(today, "eeee")}</p>
                 <p className="text-sm font-medium">Week {getWeek(today)}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium">{format(today, "MMM")}</p>
+                <p className="text-sm font-medium">{format(today, "d")}</p>
                 <p className="text-2xl font-bold">{format(today, "d")}</p>
               </div>
             </div>
@@ -75,7 +81,10 @@ export function DashboardPageContent() {
           </div>
 
           {/* Week Calendar */}
-          <WeekCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+          <WeekCalendar
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
 
           {/* AI Daily Summary */}
           <DailySummaryCard />
@@ -83,9 +92,9 @@ export function DashboardPageContent() {
 
         <div className="space-y-6">
           {/* Tasks for selected date */}
-          <TodayTasks date={selectedDate} tasks={tasks} onTaskUpdate={refetchTasks} />
+          <TodayTasks date={selectedDate} tasks={tasks} />
         </div>
       </div>
     </div>
-  )
+  );
 }

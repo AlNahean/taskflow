@@ -38,6 +38,7 @@ async function getNote(id: string) {
 }
 
 export default async function NoteDetailPage({ params }: { params: { id: string } }) {
-    const note = await getNote(params.id);
+    const { id } = params;
+    const note = await getNote(id);
     return <NoteDetailPageContent note={note} />;
 }

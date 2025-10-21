@@ -15,7 +15,7 @@ import { useToast } from "../ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card"
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
-import { useAppContext } from "@/contexts/app-provider" // Import the context hook
+import { useUpdateTask } from "@/hooks/use-tasks";
 
 interface TaskEditPageContentProps {
     taskId: string
@@ -24,9 +24,9 @@ interface TaskEditPageContentProps {
 export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const router = useRouter()
     const { toast } = useToast()
-    const { refetchTasks } = useAppContext(); // Get the global refetch function
     const [task, setTask] = useState<Task | null>(null)
     const [loading, setLoading] = useState(true)
+    const { mutate: updateTask } = useUpdateTask();
 
     const form = useForm<UpdateTaskInput>({
         resolver: zodResolver(UpdateTaskSchema),
@@ -64,25 +64,15 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     }, [fetchTask]);
 
     const onSubmit = async (data: UpdateTaskInput) => {
-        try {
-            const response = await fetch(`/api/tasks/${taskId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!response.ok) throw new Error("Failed to update");
-
-            toast({ title: "Success", description: "Task updated successfully." })
-
-            // --- THIS IS THE FIX ---
-            await refetchTasks(); // Trigger a global data refresh
-
-            router.push("/tasks")
-            // No longer need router.refresh() as the state will be fresh
-        } catch (error) {
-            toast({ variant: "destructive", title: "Error", description: "Failed to update task." })
-        }
-    }
+        updateTask(
+            { id: taskId, ...data },
+            {
+                onSuccess: () => {
+                    router.push("/tasks");
+                },
+            }
+        );
+    };
 
     // ... (rest of the component JSX is unchanged)
     if (loading) {

@@ -4,11 +4,12 @@ import type { Metadata } from "next"
 
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { MainLayout } from "@/components/layout/main-layout"
-import { Providers } from "@/components/providers"
-import { Toaster } from "@/components/ui/toaster"
-import { AppProvider } from "@/contexts/app-provider"
-import { SettingsProvider } from "@/contexts/settings-provider" // Import the new provider
+import { MainLayout } from "@/components/layout/main-layout";
+import { Providers } from "@/components/providers";
+import { Toaster } from "@/components/ui/toaster";
+import { SettingsProvider } from "@/contexts/settings-provider";
+import { QueryProvider } from "@/components/query-provider";
+import { TaskFormModal } from "@/components/tasks/task-form-modal";
 
 import { Geist, Geist_Mono, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
@@ -32,12 +33,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <Providers>
-          <SettingsProvider> {/* Wrap AppProvider */}
-            <AppProvider>
+          <QueryProvider>
+            <SettingsProvider>
               <MainLayout>{children}</MainLayout>
               <Toaster />
-            </AppProvider>
-          </SettingsProvider>
+              <TaskFormModal />
+            </SettingsProvider>
+          </QueryProvider>
         </Providers>
         <Analytics />
       </body>

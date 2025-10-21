@@ -1,13 +1,18 @@
-"use client"
+// File: components/pages/notes-list-page.tsx
+"use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useCreateNote } from "@/hooks/use-notes";
 
 interface Note {
     id: string;
@@ -21,23 +26,13 @@ interface NotesListPageContentProps {
     initialNotes: Note[];
 }
 
-export function NotesListPageContent({ initialNotes }: NotesListPageContentProps) {
-    const router = useRouter();
-    const { toast } = useToast();
+export function NotesListPageContent({
+    initialNotes,
+}: NotesListPageContentProps) {
+    const { mutate: createNote, isPending } = useCreateNote();
 
-    const handleCreateNote = async () => {
-        try {
-            const response = await fetch('/api/notes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: 'Untitled Note' }),
-            });
-            if (!response.ok) throw new Error("Failed to create note");
-            const newNote = await response.json();
-            router.push(`/notes/${newNote.id}`);
-        } catch (error) {
-            toast({ variant: "destructive", title: "Error", description: "Could not create a new note." });
-        }
+    const handleCreateNote = () => {
+        createNote({ title: "Untitled Note" });
     };
 
     return (
@@ -49,14 +44,14 @@ export function NotesListPageContent({ initialNotes }: NotesListPageContentProps
                         Create and manage your notes. Generate tasks with AI.
                     </p>
                 </div>
-                <Button onClick={handleCreateNote}>
+                <Button onClick={handleCreateNote} disabled={isPending}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Note
                 </Button>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {initialNotes.map(note => (
+                {initialNotes.map((note) => (
                     <Link href={`/notes/${note.id}`} key={note.id}>
                         <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
                             <CardHeader>
