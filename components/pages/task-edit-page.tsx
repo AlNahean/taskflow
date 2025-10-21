@@ -3,8 +3,9 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray, type FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { v4 as uuidv4 } from 'uuid';
 import { UpdateTaskSchema, type UpdateTaskInput, type Task } from "../../lib/schemas"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
@@ -15,9 +16,11 @@ import { useToast } from "../ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card"
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
-import { useUpdateTask } from "@/hooks/use-tasks";
-import { createClientLogger } from "@/lib/logger";
+import { useUpdateTask } from "../../hooks/use-tasks";
+import { createClientLogger } from "../../lib/logger"
 import { Switch } from "../ui/switch"
+import { Checkbox } from "../ui/checkbox"
+import { PlusCircle, Trash2 } from "lucide-react"
 
 const logger = createClientLogger("TaskEditPage");
 
@@ -30,11 +33,21 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const { toast } = useToast()
     const [task, setTask] = useState<Task | null>(null)
     const [loading, setLoading] = useState(true)
-    const { mutate: updateTask, isPending } = useUpdateTask();
+    const { mutateAsync: updateTask, isPending } = useUpdateTask();
 
     const form = useForm<UpdateTaskInput>({
         resolver: zodResolver(UpdateTaskSchema),
+        defaultValues: {
+            title: '',
+            description: '',
+            subtasks: [],
+        },
     })
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "subtasks",
+    });
 
     const fetchTask = useCallback(async () => {
         setLoading(true);
@@ -54,6 +67,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
             form.reset({
                 ...parsedTask,
                 description: parsedTask.description ?? "",
+                subtasks: parsedTask.subtasks?.map(st => ({ id: st.id, text: st.text, completed: !!st.completed })) || [],
             });
             logger.info("Successfully fetched and parsed task.", { task: parsedTask });
         } catch (error) {
@@ -69,26 +83,25 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
         fetchTask();
     }, [fetchTask]);
 
+    const onInvalid = (errors: FieldErrors<UpdateTaskInput>) => {
+        logger.error("Form validation failed", { errors });
+        toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "Please check the form for errors. See console for details.",
+        });
+    };
+
+
     const onSubmit = async (data: UpdateTaskInput) => {
         logger.info("Form submitted. Calling updateTask mutation.", { taskId, data });
-        updateTask(
-            { id: taskId, ...data },
-            {
-                onSuccess: () => {
-                    logger.info("updateTask mutation successful. Navigating to /tasks.");
-                    toast({ title: "Success", description: "Task updated successfully." });
-                    router.push("/tasks");
-                },
-                onError: (error) => {
-                    logger.error("updateTask mutation failed in component.", { error });
-                    toast({
-                        variant: "destructive",
-                        title: "Update Failed",
-                        description: "Could not save your changes. Please try again.",
-                    });
-                },
-            }
-        );
+        try {
+            await updateTask({ id: taskId, ...data });
+            logger.info("updateTask mutation successful. Navigating to /tasks.");
+            router.push("/tasks");
+        } catch (error) {
+            logger.error("updateTask mutation failed in component.", { error });
+        }
     };
 
     if (loading) {
@@ -131,7 +144,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
                             <FormField
                                 control={form.control}
                                 name="title"
@@ -145,6 +158,40 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                                     </FormItem>
                                 )}
                             />
+
+                            {/* Subtasks Section */}
+                            <div className="space-y-2">
+                                <FormLabel>Sub-tasks</FormLabel>
+                                {fields.map((field, index) => (
+                                    <FormField
+                                        key={field.id}
+                                        control={form.control}
+                                        name={`subtasks.${index}.text`}
+                                        render={({ field: subtaskField }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <div className="flex items-center gap-2">
+                                                        <Checkbox
+                                                            checked={form.watch(`subtasks.${index}.completed`)}
+                                                            onCheckedChange={(checked) => {
+                                                                form.setValue(`subtasks.${index}.completed`, !!checked);
+                                                            }}
+                                                        />
+                                                        <Input {...subtaskField} placeholder="Edit sub-task..." />
+                                                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                                <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => append({ id: uuidv4(), text: "", completed: false })}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Sub-task
+                                </Button>
+                            </div>
 
                             <FormField
                                 control={form.control}

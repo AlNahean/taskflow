@@ -1,12 +1,12 @@
 // File: components/tasks/task-card.tsx
 "use client";
 
-import type { Task, TaskStatus } from "@/lib/schemas";
+import type { Task, TaskStatus } from "../../lib/schemas";
 import Link from "next/link";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
-import { MoreVertical, Trash2, Star } from "lucide-react";
+import { MoreVertical, Trash2, Star, CheckSquare } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -15,8 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { format } from "date-fns";
-import { useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
-import { cn } from "@/lib/utils";
+import { useUpdateTask, useDeleteTask, useUpdateSubtask } from "../../hooks/use-tasks";
+import { cn } from "../../lib/utils";
+import { Progress } from "../ui/progress";
 
 interface TaskCardProps {
   task: Task;
@@ -31,6 +32,7 @@ const priorityColors: Record<string, string> = {
 export function TaskCard({ task }: TaskCardProps) {
   const { mutate: updateTask } = useUpdateTask();
   const { mutate: deleteTask } = useDeleteTask();
+  const { mutate: updateSubtask } = useUpdateSubtask();
 
   const handleToggleComplete = () => {
     const newStatus: TaskStatus =
@@ -43,6 +45,11 @@ export function TaskCard({ task }: TaskCardProps) {
     e.stopPropagation();
     updateTask({ id: task.id, starred: !task.starred });
   };
+
+  const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
+  const totalSubtasks = task.subtasks?.length || 0;
+  const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+
 
   return (
     <Card className="p-4 hover:shadow-md transition-shadow flex flex-col h-full">
@@ -98,6 +105,37 @@ export function TaskCard({ task }: TaskCardProps) {
           </div>
         </div>
       </div>
+
+      {task.subtasks && task.subtasks.length > 0 && (
+        <div className="mt-4 space-y-2 pl-7">
+          {totalSubtasks > 3 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckSquare className="h-4 w-4" />
+              <span>{completedSubtasks} of {totalSubtasks} completed</span>
+            </div>
+          )}
+          <div className="space-y-2">
+            {task.subtasks.slice(0, 3).map(subtask => (
+              <div key={subtask.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`subtask-${subtask.id}`}
+                  checked={subtask.completed}
+                  onCheckedChange={(checked) => updateSubtask({ id: subtask.id, completed: !!checked })}
+                />
+                <label
+                  htmlFor={`subtask-${subtask.id}`}
+                  className={cn("text-sm", subtask.completed && "line-through text-muted-foreground")}
+                >
+                  {subtask.text}
+                </label>
+              </div>
+            ))}
+          </div>
+          {totalSubtasks > 3 && <Progress value={progress} className="h-1" />}
+        </div>
+      )}
+
+
       <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">
         <Badge variant="outline">
           {format(new Date(task.dueDate), "MMM d")}

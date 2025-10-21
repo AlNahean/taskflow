@@ -1,26 +1,27 @@
 // File: components/tasks/task-form-modal.tsx
 "use client";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateTaskSchema, type CreateTaskInput } from "@/lib/schemas";
-import { TaskPriority, TaskCategory } from "@/lib/schemas";
+import { CreateTaskSchema, type CreateTaskInput } from "../../lib/schemas";
+import { TaskPriority, TaskCategory } from "../../lib/schemas";
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../ui/select";
 import {
   Form,
   FormControl,
@@ -29,14 +30,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+} from "../ui/form";
+import { useToast } from "../ui/use-toast";
 import { useEffect } from "react";
-import { useModalStore } from "@/stores/use-modal-store";
-import { useCreateTask } from "@/hooks/use-tasks";
+import { useModalStore } from "../../stores/use-modal-store";
+import { useCreateTask } from "../../hooks/use-tasks";
 import { useRouter } from "next/navigation";
-import { createClientLogger } from "@/lib/logger";
+import { createClientLogger } from "../../lib/logger";
 import { Switch } from "../ui/switch";
+import { Checkbox } from "../ui/checkbox";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 const logger = createClientLogger("TaskFormModal");
 
@@ -63,6 +66,7 @@ export function TaskFormModal() {
       category: taskModalData?.category || savedCategory || "personal",
       status: taskModalData?.status || "todo",
       starred: taskModalData?.starred || false,
+      subtasks: [],
       startDate: taskModalData?.startDate
         ? new Date(taskModalData.startDate)
         : new Date(),
@@ -76,6 +80,11 @@ export function TaskFormModal() {
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: getDefaults(),
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "subtasks",
   });
 
   useEffect(() => {
@@ -140,23 +149,40 @@ export function TaskFormModal() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Task description"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Subtasks Section */}
+            <div className="space-y-2">
+              <FormLabel>Sub-tasks</FormLabel>
+              {fields.map((field, index) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`subtasks.${index}.text`}
+                  render={({ field: subtaskField }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={form.watch(`subtasks.${index}.completed`)}
+                            onCheckedChange={(checked) => {
+                              form.setValue(`subtasks.${index}.completed`, !!checked);
+                            }}
+                          />
+                          <Input {...subtaskField} placeholder="New sub-task..." />
+                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+              <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => append({ text: "", completed: false })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Sub-task
+              </Button>
+            </div>
+
 
             <FormField
               control={form.control}

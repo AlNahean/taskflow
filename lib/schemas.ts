@@ -1,5 +1,27 @@
 import { z } from "zod";
 
+// --- SubTask Schemas ---
+export const SubTaskSchema = z.object({
+  id: z.string(),
+  text: z.string().min(1, "Sub-task text cannot be empty"),
+  completed: z.boolean(),
+  taskId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+export type SubTask = z.infer<typeof SubTaskSchema>;
+
+const CreateSubTaskSchema = z.object({
+  text: z.string().min(1, "Sub-task text cannot be empty"),
+  completed: z.boolean().default(false),
+});
+
+const UpdateSubTaskSchema = z.object({
+  id: z.string().optional(), // Will be present for existing sub-tasks
+  text: z.string().min(1, "Sub-task text cannot be empty"),
+  completed: z.boolean(), // Make completed a required boolean
+});
+
 // Task Status
 export const TaskStatus = z.enum([
   "todo",
@@ -36,19 +58,10 @@ export const TaskSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   starred: z.boolean(),
-  suggestedTaskId: z.string().nullable().optional(),
+  suggestedTaskId: z.string().nullable(),
+  subtasks: z.array(SubTaskSchema).optional(), // Add subtasks relation
 });
 export type Task = z.infer<typeof TaskSchema>;
-
-// Note Schema
-export const NoteSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-export type Note = z.infer<typeof NoteSchema>;
 
 // Create Task Input
 export const CreateTaskSchema = z.object({
@@ -61,11 +74,14 @@ export const CreateTaskSchema = z.object({
   dueDate: z.coerce.date(),
   starred: z.boolean().optional(),
   suggestedTaskId: z.string().optional(),
+  subtasks: z.array(CreateSubTaskSchema).optional(), // Add subtasks for creation
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
 // Update Task Input
-export const UpdateTaskSchema = CreateTaskSchema.partial();
+export const UpdateTaskSchema = CreateTaskSchema.partial().extend({
+  subtasks: z.array(UpdateSubTaskSchema).optional(), // Add subtasks for updates
+});
 
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
 
@@ -93,8 +109,8 @@ export const SuggestedTaskSchema = z.object({
   dueDate: z.date().nullable(),
   isAdded: z.boolean(),
   noteId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  createdTask: TaskSchema.nullable().optional(),
+  createdAt: z.date(), // Add createdAt
+  updatedAt: z.date(), // Add updatedAt
+  createdTask: TaskSchema.nullable().optional(), // Add createdTask relation
 });
 export type SuggestedTask = z.infer<typeof SuggestedTaskSchema>;

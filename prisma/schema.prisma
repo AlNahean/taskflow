@@ -23,8 +23,10 @@ model Task {
     updatedAt   DateTime     @updatedAt
     starred     Boolean      @default(false)
 
-    suggestedTaskId String?        @unique // A task can optionally come from one suggestion
+    suggestedTaskId String?        @unique
     suggestion      SuggestedTask? @relation(fields: [suggestedTaskId], references: [id])
+
+    subtasks SubTask[] // Relation to SubTasks
 }
 
 enum TaskStatus {
@@ -69,6 +71,7 @@ model SuggestedTask {
     isAdded     Boolean      @default(false)
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
+    subtasks    Json? // Store suggested subtasks as JSON
 
     noteId String
     note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
@@ -76,4 +79,17 @@ model SuggestedTask {
     createdTask Task?
 
     @@index([noteId])
+}
+
+model SubTask {
+    id        String   @id @default(uuid())
+    text      String
+    completed Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    taskId String
+    task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    @@index([taskId])
 }

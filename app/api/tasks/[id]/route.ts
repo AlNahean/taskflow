@@ -18,6 +18,7 @@ export async function GET(
   try {
     const task = await prisma.task.findUnique({
       where: { id: id },
+      include: { subtasks: true }, // Include subtasks
     });
     if (!task) {
       serverLogger.warn(context, `[API /api/tasks/[id]] Task not found`);
@@ -51,16 +52,60 @@ export async function PATCH(
       { ...context, body },
       `[API /api/tasks/[id]] Parsed request body`
     );
-    const validatedData = UpdateTaskSchema.parse(body);
+    const { subtasks, ...taskData } = UpdateTaskSchema.parse(body);
     serverLogger.info(
       { ...context },
       `[API /api/tasks/[id]] Validation successful`
     );
 
-    const updatedTask = await prisma.task.update({
-      where: { id: id },
-      data: validatedData,
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      // If subtasks are part of the update, sync them
+      if (subtasks) {
+        const existingSubtasks = await tx.subTask.findMany({
+          where: { taskId: id },
+        });
+        const existingSubtaskIds = existingSubtasks.map((st) => st.id);
+        const incomingSubtaskIds = subtasks.map((st) => st.id).filter(Boolean);
+
+        // 1. Delete subtasks that are no longer present
+        const toDelete = existingSubtaskIds.filter(
+          (id) => !incomingSubtaskIds.includes(id)
+        );
+        if (toDelete.length > 0) {
+          await tx.subTask.deleteMany({ where: { id: { in: toDelete } } });
+        }
+
+        // 2. Update existing and create new subtasks
+        for (const subtask of subtasks) {
+          if (subtask.id && existingSubtaskIds.includes(subtask.id)) {
+            // Update
+            await tx.subTask.update({
+              where: { id: subtask.id },
+              data: { text: subtask.text, completed: subtask.completed },
+            });
+          } else {
+            // Create
+            await tx.subTask.create({
+              data: {
+                text: subtask.text,
+                completed: subtask.completed,
+                taskId: id,
+              },
+            });
+          }
+        }
+      }
+
+      // Update the parent task
+      const task = await tx.task.update({
+        where: { id: id },
+        data: taskData,
+        include: { subtasks: true },
+      });
+
+      return task;
     });
+
     serverLogger.info(
       { ...context, taskId: updatedTask.id },
       `[API /api/tasks/[id]] Task updated successfully in DB`

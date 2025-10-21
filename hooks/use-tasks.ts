@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
-import type { Task, CreateTaskInput, UpdateTaskInput } from "@/lib/schemas";
-import { createClientLogger } from "@/lib/logger";
+import { useToast } from "../components/ui/use-toast";
+import type {
+  Task,
+  CreateTaskInput,
+  UpdateTaskInput,
+  SubTask,
+} from "../lib/schemas";
+import { createClientLogger } from "../lib/logger";
+import { v4 as uuidv4 } from "uuid"; // Add this import
 
 const logger = createClientLogger("useTasks");
 
@@ -12,6 +18,11 @@ const parseTaskDates = (task: any): Task => ({
   dueDate: new Date(task.dueDate),
   createdAt: new Date(task.createdAt),
   updatedAt: new Date(task.updatedAt),
+  subtasks: task.subtasks?.map((st: any) => ({
+    ...st,
+    createdAt: new Date(st.createdAt),
+    updatedAt: new Date(st.updatedAt),
+  })),
 });
 
 // Fetch all tasks
@@ -98,15 +109,77 @@ export const useUpdateTask = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  return useMutation({
+  return useMutation<
+    Task,
+    Error,
+    { id: string } & UpdateTaskInput,
+    { previousTasks: Task[] | undefined }
+  >({
     mutationFn: updateTask,
-    onMutate: async (updatedTask) => {
+    onMutate: async (updatedTaskData) => {
+      logger.info("[onMutate] Optimistically updating task.", {
+        updatedTaskData,
+      });
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
       const previousTasks = queryClient.getQueryData<Task[]>(["tasks"]);
+
       queryClient.setQueryData<Task[]>(["tasks"], (old) =>
-        old?.map((task) =>
-          task.id === updatedTask.id ? { ...task, ...updatedTask } : task
-        )
+        old?.map((task) => {
+          if (task.id === updatedTaskData.id) {
+            const currentSubtasks = task.subtasks || [];
+            const incomingSubtasks = updatedTaskData.subtasks || [];
+
+            const newSubtasksMap = new Map<string, SubTask>();
+
+            // Process existing and updated subtasks
+            incomingSubtasks.forEach((incomingSt) => {
+              if (incomingSt.id) {
+                // Existing subtask being updated
+                const existingSt = currentSubtasks.find(
+                  (st) => st.id === incomingSt.id
+                );
+                if (existingSt) {
+                  newSubtasksMap.set(incomingSt.id, {
+                    ...existingSt,
+                    ...incomingSt,
+                  });
+                } else {
+                  // This case means an existing subtask ID was provided but not found in current task.
+                  // For optimistic update, we'll create a placeholder.
+                  newSubtasksMap.set(incomingSt.id, {
+                    id: incomingSt.id,
+                    taskId: task.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    text: incomingSt.text,
+                    completed: incomingSt.completed,
+                  });
+                }
+              } else {
+                // New subtask (no ID yet), assign a temporary one for optimistic update
+                const tempId = uuidv4();
+                newSubtasksMap.set(tempId, {
+                  id: tempId,
+                  taskId: task.id,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  text: incomingSt.text,
+                  completed: incomingSt.completed,
+                });
+              }
+            });
+
+            // The final list of subtasks for the optimistic update
+            const finalSubtasks = Array.from(newSubtasksMap.values());
+
+            return {
+              ...task,
+              ...updatedTaskData,
+              subtasks: finalSubtasks,
+            };
+          }
+          return task;
+        })
       );
       return { previousTasks };
     },
@@ -115,8 +188,7 @@ export const useUpdateTask = () => {
         data,
         variables,
       });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      toast({ title: "Success", description: "Task updated." });
     },
     onError: (err, variables, context) => {
       logger.error("[onError] Hook error handler fired.", {
@@ -133,11 +205,12 @@ export const useUpdateTask = () => {
       });
     },
     onSettled: (data, error, variables) => {
-      logger.info("[onSettled] Hook settled handler fired.", {
-        data,
-        error,
-        variables,
-      });
+      logger.info(
+        "[onSettled] Hook settled handler fired. Invalidating queries.",
+        { data, error, variables }
+      );
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
     },
   });
 };
@@ -176,6 +249,55 @@ export const useDeleteTask = () => {
         title: "Error",
         description: "Failed to delete task.",
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+};
+
+// Update a single subtask
+const updateSubtask = async ({
+  id,
+  completed,
+}: {
+  id: string;
+  completed: boolean;
+}): Promise<SubTask> => {
+  const response = await fetch(`/api/subtasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ completed }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update subtask");
+  }
+  return response.json();
+};
+
+export const useUpdateSubtask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateSubtask,
+    onMutate: async ({ id, completed }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousTasks = queryClient.getQueryData<Task[]>(["tasks"]);
+
+      queryClient.setQueryData<Task[]>(["tasks"], (old) =>
+        old?.map((task) => ({
+          ...task,
+          subtasks: task.subtasks?.map((st) =>
+            st.id === id ? { ...st, completed } : st
+          ),
+        }))
+      );
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["tasks"], context.previousTasks);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

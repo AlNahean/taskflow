@@ -1,10 +1,10 @@
-// File: E:/projects/sorties/task-manager-app/app/api/tasks/route.ts
+// File: E:/projects/sorties/task-management/task-manager-app/app/api/tasks/route.ts
 import { NextResponse } from "next/server";
 import prisma from "../../../lib/prisma";
 import { CreateTaskSchema } from "../../../lib/schemas";
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
-import { serverLogger } from "@/lib/logger";
+import { serverLogger } from "../../../lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,9 @@ export async function GET(request: Request) {
     const tasks = await prisma.task.findMany({
       orderBy: {
         createdAt: "desc",
+      },
+      include: {
+        subtasks: true, // Include subtasks in the response
       },
     });
     return NextResponse.json(tasks);
@@ -40,12 +43,23 @@ export async function POST(request: Request) {
       `[API /api/tasks] Parsed request body`
     );
 
-    // The suggestionId is destructured here and the rest of the properties
-    const { suggestedTaskId, ...taskData } = CreateTaskSchema.parse(body);
+    const { suggestedTaskId, subtasks, ...taskData } =
+      CreateTaskSchema.parse(body);
     serverLogger.info({ ...context }, `[API /api/tasks] Validation successful`);
 
     const newTask = await prisma.task.create({
-      data: { ...taskData, suggestedTaskId },
+      data: {
+        ...taskData,
+        suggestedTaskId,
+        subtasks: subtasks
+          ? {
+              create: subtasks,
+            }
+          : undefined,
+      },
+      include: {
+        subtasks: true,
+      },
     });
     serverLogger.info(
       { ...context, taskId: newTask.id },

@@ -19,7 +19,7 @@ function formatExistingTasksForAI(tasks: { title: string }[]): string {
   );
 }
 
-// Zod schema for validating the AI's output. It's more lenient with dates.
+// Zod schema for validating the AI's output, now including subtasks
 const AISuggestedTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().max(1000).nullable().optional(),
@@ -35,6 +35,7 @@ const AISuggestedTaskSchema = z.object({
     .transform((val, ctx) => new Date(val))
     .optional(),
   dueDate: z.string().transform((val, ctx) => new Date(val)),
+  subtasks: z.array(z.object({ text: z.string() })).optional(),
 });
 
 export async function POST(req: Request) {
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
   });
 
   try {
-    const { prompt, noteId } = await req.json();
+    const { prompt, noteId, model } = await req.json();
     serverLogger.info(
       { ...context, noteId },
       `[API /api/ai/suggest-tasks] Parsed request body`
@@ -99,14 +100,11 @@ export async function POST(req: Request) {
     const systemPrompt = `You are a world-class task management assistant. Your purpose is to analyze a user's note and extract a list of actionable tasks.
 
       You MUST adhere to the following rules:
-      1.  Your entire response MUST be a single, valid JSON object: { "tasks": [...] }. Do NOT include any markdown, explanations, or other text.
-      2.  The "tasks" array must contain objects with these exact keys: "title", "description", "status", "priority", "category", "startDate", "dueDate".
-      3.  'status' must always be "todo".
-      4.  Your response should be a JSON object.
-      5.  Analyze the text for keywords to determine 'priority'.
-      6.  Analyze the text for keywords to determine 'category'.
-      7.  MOST IMPORTANTLY: Analyze the text for dates and convert them to absolute ISO 8601 date strings.
-      8.  CRITICAL: A list of existing suggestions is provided below. Identify ONLY NEW tasks from the user's note that are NOT in this list. Do not repeat or re-phrase existing suggestions. If no new tasks are found, return an empty "tasks" array.
+      1.  Your entire response MUST be a single, valid JSON object: { "tasks": [...] }.
+      2.  Each task object must contain "title", "description", "status", "priority", "category", "startDate", "dueDate", and an optional "subtasks" array.
+      3.  If a task can be broken down into smaller, concrete steps, add them to the "subtasks" array. Each subtask should be an object like {"text": "Step description"}.
+      4.  'status' must always be "todo".
+      5.  CRITICAL: A list of existing suggestions is provided. Identify ONLY NEW tasks from the user's note that are NOT in this list. If no new tasks are found, return an empty "tasks" array.
 
       ${existingTasksContext}
       `;
@@ -115,7 +113,7 @@ export async function POST(req: Request) {
     const userPromptWithDateContext = `Based on the current date of ${new Date().toISOString()}, analyze the following note:\n\n---\n\n${prompt}`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+      model: model || "gpt-4-turbo",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPromptWithDateContext },
@@ -159,6 +157,7 @@ export async function POST(req: Request) {
         data: newValidatedTasks.map((task) => ({
           ...task,
           description: task.description ?? null,
+          subtasks: task.subtasks ? { subtasks: task.subtasks } : undefined, // Store subtasks in the JSON field
           noteId: noteId,
         })),
       });
