@@ -34,6 +34,9 @@ import { useEffect } from "react";
 import { useModalStore } from "@/stores/use-modal-store";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useRouter } from "next/navigation";
+import { createClientLogger } from "@/lib/logger";
+
+const logger = createClientLogger("TaskFormModal");
 
 export function TaskFormModal() {
   const { toast } = useToast();
@@ -79,7 +82,7 @@ export function TaskFormModal() {
   }, [isTaskModalOpen, taskModalData, form]);
 
   const onSubmit = async (data: CreateTaskInput) => {
-    console.log("LOG: [TaskFormModal] Submitting form with data:", data);
+    logger.info("Form submission initiated", { data });
     createTask(data, {
       onSuccess: async () => {
         closeTaskModal();

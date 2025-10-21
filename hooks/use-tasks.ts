@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import type { Task, CreateTaskInput, UpdateTaskInput } from "@/lib/schemas";
+import { createClientLogger } from "@/lib/logger";
+
+const logger = createClientLogger("useTasks");
 
 // Helper to parse date strings from the API into Date objects
 const parseTaskDates = (task: any): Task => ({
@@ -36,8 +39,8 @@ const createTask = async (newTask: CreateTaskInput): Promise<Task> => {
     body: JSON.stringify(newTask),
   });
   if (!response.ok) {
-    const errorBody = await response.json();
-    console.error("LOG: [useCreateTask] API Error Response Body:", errorBody);
+    const errorBody = await response.json().catch(() => ({}));
+    logger.error("API error response body", { error: errorBody });
     throw new Error("Failed to create task");
   }
   return response.json();
@@ -50,12 +53,12 @@ export const useCreateTask = () => {
   return useMutation({
     mutationFn: createTask,
     onSuccess: (data) => {
-      console.log("LOG: [useCreateTask] Mutation successful:", data);
+      logger.info("Task creation successful", { data });
       toast({ title: "Success", description: "Task created successfully." });
       return queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (error) => {
-      console.error("LOG: [useCreateTask] Mutation failed:", error);
+      logger.error("Task creation mutation failed", { error });
       toast({
         variant: "destructive",
         title: "Error",

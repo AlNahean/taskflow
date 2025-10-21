@@ -13,6 +13,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import { useSettings, AIModel } from "@/contexts/settings-provider"
+import { createClientLogger } from "@/lib/logger";
+
+const logger = createClientLogger("SettingsPage");
 
 export function SettingsPageContent() {
   const { data: tasks = [] } = useTasks() // Use the global context
@@ -59,11 +62,14 @@ export function SettingsPageContent() {
 
   const handleDeleteAllData = async () => {
     try {
+      logger.info("Attempting to delete all data");
       const response = await fetch('/api/tasks/all', { method: 'DELETE' });
       if (!response.ok) throw new Error("Failed to delete data.");
+      logger.info("All data deleted successfully");
       toast({ title: "All Data Deleted", description: "Your tasks and notes have been cleared." });
       window.location.reload();
     } catch (error) {
+      logger.error("Failed to delete all data", { error });
       toast({ variant: "destructive", title: "Error", description: "Could not delete your data." });
     }
   }

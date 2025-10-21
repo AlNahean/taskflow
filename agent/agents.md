@@ -197,4 +197,56 @@ The application's state is built around a central database containing two primar
 
 ---
 
+## SECTION 5: STANDARDIZED LOGGING PROTOCOL
+
+This section outlines the application-wide strategy for logging. The goal is to move beyond simple `console.log` statements to a structured, contextual, and environment-aware system that simplifies debugging and is ready for production environments.
+
+### 5.1. Core Principles
+
+- **Structured:** All logs are written as JSON objects, making them machine-readable, searchable, and filterable.
+- **Contextual:** Every log message clearly indicates its origin (e.g., API route, client-side hook).
+- **Layered:** Logging is implemented at every critical boundary: UI interaction, data mutation hooks, API routes, and database operations.
+- **Environment-Aware:** The verbosity of logs is automatically controlled by the `NODE_ENV` environment variable.
+
+### 5.2. Chosen Tools & Implementation
+
+A dual-pronged approach is used to optimize for both server performance and client-side bundle size.
+
+- **Server-Side Logging (Terminal):**
+
+  - **Tool:** **Pino** is the standard for high-performance, low-overhead structured logging in Node.js.
+  - **Development:** In `development` mode, logs are beautified using **`pino-pretty`** for maximum readability in the terminal. The log level is set to `info` to capture all important events.
+  - **Production:** In `production` mode, the log level is automatically set to `error`. Only critical errors are logged, and they are written as raw JSON, which is the expected format for production log management services.
+
+- **Client-Side Logging (Browser Console):**
+  - **Tool:** A **lightweight custom wrapper** around the browser's native `console` object. This avoids adding unnecessary weight to the client bundle.
+  - **Development:** The logger will print `info`, `warn`, and `error` messages with a consistent format.
+  - **Production:** `info` and `debug` level logs are disabled (they become no-op functions). `warn` and `error` logs remain active to capture issues experienced by real users.
+
+### 5.3. Centralized Logger
+
+All logging logic is centralized in a new utility file: `lib/logger.ts`. This file exports two pre-configured loggers:
+
+- `serverLogger`: For use in all server-side code (API routes, server components).
+- `clientLogger`: For use in all client-side code (`"use client"` components and hooks).
+
+### 5.4. Usage Example
+
+```typescript
+// Example from an API route
+import { serverLogger } from "@/lib/logger";
+import { ZodError } from "zod";
+
+try {
+  const validatedData = schema.parse(body);
+  serverLogger.info({ data: validatedData }, "Validation successful");
+  // ...
+} catch (error) {
+  if (error instanceof ZodError) {
+    serverLogger.error({ err: error.issues }, "Zod validation failed");
+  }
+}
+```
+
+This protocol ensures that debugging is efficient and that the application's logging is scalable and secure for production.
 This document supersedes all previous instructions. Adherence is required for mission success.

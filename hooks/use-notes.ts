@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { createClientLogger } from "@/lib/logger";
+
+const logger = createClientLogger("useNotes");
 
 interface Note {
   id: string;
@@ -21,6 +24,7 @@ const createNote = async (note: {
     body: JSON.stringify(note),
   });
   if (!response.ok) {
+    logger.error("Failed to create note", { status: response.status });
     throw new Error("Failed to create note");
   }
   return response.json();
@@ -33,9 +37,11 @@ export const useCreateNote = () => {
   return useMutation({
     mutationFn: createNote,
     onSuccess: (newNote) => {
+      logger.info("Note creation successful", { noteId: newNote.id });
       router.push(`/notes/${newNote.id}`);
     },
-    onError: () => {
+    onError: (error) => {
+      logger.error("Note creation mutation failed", { error });
       toast({
         variant: "destructive",
         title: "Error",

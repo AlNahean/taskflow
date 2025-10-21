@@ -53,7 +53,13 @@ async function getNote(id: string) {
     return serializedNote;
 }
 
-export default async function NoteDetailPage({ params }: { params: { id: string } }) {
-    const note = await getNote(params.id);
+export default async function NoteDetailPage({
+    params
+}: {
+    params: Promise<{ id: string }>
+}) {
+    // Await params before using its properties
+    const { id } = await params;
+    const note = await getNote(id);
     return <NoteDetailPageContent note={note} />;
 }

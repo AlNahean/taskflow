@@ -2,7 +2,8 @@
 import { NextResponse } from "next/server";
 import { OpenAI } from "openai";
 import prisma from "@/lib/prisma";
-import { z } from "zod";
+import { z, ZodError } from "zod";
+import { serverLogger } from "@/lib/logger";
 
 // This route can't be edge-compatible because it needs to access the database.
 // export const runtime = "edge";
@@ -26,7 +27,17 @@ const AISuggestedTaskSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const context = { req: { method: req.method, url: req.url } };
+  serverLogger.info(
+    context,
+    `[API /api/ai/suggest-tasks] POST request received`
+  );
+
   if (!process.env.OPENAI_API_KEY) {
+    serverLogger.error(
+      context,
+      `[API /api/ai/suggest-tasks] OpenAI API key is missing`
+    );
     return new Response(
       JSON.stringify({
         error: "Server configuration error: OpenAI API key is missing.",
@@ -41,14 +52,26 @@ export async function POST(req: Request) {
 
   try {
     const { prompt, noteId } = await req.json();
+    serverLogger.info(
+      { ...context, noteId },
+      `[API /api/ai/suggest-tasks] Parsed request body`
+    );
 
     if (!noteId) {
+      serverLogger.warn(
+        { ...context },
+        `[API /api/ai/suggest-tasks] noteId is missing`
+      );
       return new Response(JSON.stringify({ error: "noteId is required." }), {
         status: 400,
       });
     }
 
     if (!prompt || prompt.length < 10) {
+      serverLogger.warn(
+        { ...context },
+        `[API /api/ai/suggest-tasks] Prompt is too short`
+      );
       return new Response(
         JSON.stringify({ error: "Note must be at least 10 characters long." }),
         { status: 400 }
@@ -116,9 +139,17 @@ export async function POST(req: Request) {
       max_tokens: 1500,
       response_format: { type: "json_object" }, // Enable JSON mode
     });
+    serverLogger.info(
+      { ...context },
+      `[API /api/ai/suggest-tasks] Received response from OpenAI`
+    );
 
     const completion = response.choices[0]?.message?.content;
     if (!completion) {
+      serverLogger.error(
+        { ...context },
+        `[API /api/ai/suggest-tasks] AI failed to return a valid response`
+      );
       throw new Error("AI failed to return a valid response.");
     }
 
@@ -128,9 +159,17 @@ export async function POST(req: Request) {
     });
     const validatedPayload = validationSchema.parse(parsedJson);
     const validatedTasks = validatedPayload.tasks;
+    serverLogger.info(
+      { ...context, validatedTasks: validatedTasks.length },
+      `[API /api/ai/suggest-tasks] AI response validated`
+    );
 
     // Transaction: Delete old (un-added) suggestions and create new ones.
     await prisma.$transaction(async (tx) => {
+      serverLogger.info(
+        { ...context, noteId },
+        `[API /api/ai/suggest-tasks] Deleting old suggestions for note`
+      );
       await tx.suggestedTask.deleteMany({
         where: {
           noteId: noteId,
@@ -139,6 +178,10 @@ export async function POST(req: Request) {
       });
 
       if (validatedTasks.length > 0) {
+        serverLogger.info(
+          { ...context, count: validatedTasks.length },
+          `[API /api/ai/suggest-tasks] Creating new suggestions`
+        );
         await tx.suggestedTask.createMany({
           data: validatedTasks.map((task) => ({
             ...task,
@@ -148,16 +191,40 @@ export async function POST(req: Request) {
         });
       }
     });
+    serverLogger.info(
+      { ...context, noteId },
+      `[API /api/ai/suggest-tasks] Suggestions processed in DB`
+    );
 
     // Return all suggestions for the note, including previously added ones.
     const allSuggestionsForNote = await prisma.suggestedTask.findMany({
       where: { noteId: noteId },
       orderBy: { createdAt: "asc" },
     });
+    serverLogger.info(
+      { ...context, count: allSuggestionsForNote.length },
+      `[API /api/ai/suggest-tasks] Returning all suggestions for note`
+    );
 
     return NextResponse.json(allSuggestionsForNote);
   } catch (error: any) {
-    console.error("--- [API] An error occurred in AI suggestion route:", error);
+    if (error instanceof ZodError) {
+      serverLogger.error(
+        { ...context, err: error.issues },
+        `[API /api/ai/suggest-tasks] Zod validation failed for AI response`
+      );
+      return new Response(
+        JSON.stringify({
+          error: "AI response validation failed",
+          details: error.issues,
+        }),
+        { status: 400 }
+      );
+    }
+    serverLogger.error(
+      { ...context, err: error },
+      `[API /api/ai/suggest-tasks] An internal error occurred`
+    );
     return new Response(
       JSON.stringify({
         error: "An internal error occurred.",
