@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings } from "@/contexts/settings-provider";
 
 export function DailySummaryCard() {
     const [summary, setSummary] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const { toast } = useToast();
+    const { models } = useSettings();
 
     const handleGenerateSummary = async () => {
         setIsLoading(true);
@@ -18,6 +20,8 @@ export function DailySummaryCard() {
         try {
             const response = await fetch('/api/ai/daily-summary', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: models.summary }),
             });
             if (!response.ok) {
                 throw new Error("The AI failed to generate a summary.");

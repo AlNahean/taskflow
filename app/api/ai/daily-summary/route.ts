@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import prisma from "@/lib/prisma";
 import { format, startOfToday, endOfToday } from "date-fns";
+import { AIModel } from "@/contexts/settings-provider";
 
 // REMOVED: export const runtime = 'edge';
 // This allows the function to run in the default Node.js runtime, which has database access.
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
   }
 
   try {
+    const { model = "gpt-4-turbo" }: { model: AIModel } = await req.json();
+
     const todayStart = startOfToday();
     const todayEnd = endOfToday();
 
@@ -62,7 +65,7 @@ export async function POST(req: Request) {
     )}:\n\n${tasksContext}`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+      model: model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

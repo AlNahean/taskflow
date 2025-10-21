@@ -20,21 +20,25 @@ interface ChatPageContentProps {
 }
 
 export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
-    const { defaultModel } = useSettings(); // Get the default model
-    const [model, setModel] = React.useState<AIModel>(defaultModel);
+    const { models, setModelForFeature } = useSettings();
+    const [selectedModel, setSelectedModel] = React.useState<AIModel>(models.chat);
 
-    // Keep the local state in sync with the global default
     React.useEffect(() => {
-        setModel(defaultModel);
-    }, [defaultModel]);
+        setSelectedModel(models.chat);
+    }, [models.chat]);
 
     const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
         api: "/api/chat",
         body: {
-            model: model,
+            model: selectedModel,
             data: initialDataContext,
         },
     });
+
+    const handleModelChange = (model: AIModel) => {
+        setSelectedModel(model);
+        setModelForFeature('chat', model); // Also update the default in settings
+    };
 
     const scrollAreaRef = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
@@ -52,8 +56,7 @@ export function ChatPageContent({ initialDataContext }: ChatPageContentProps) {
                         Ask questions about your tasks and notes.
                     </p>
                 </div>
-                {/* REMOVED disabled={isLoading} from this component */}
-                <Select value={model} onValueChange={(value) => setModel(value as AIModel)}>
+                <Select value={selectedModel} onValueChange={handleModelChange} disabled={isLoading}>
                     <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select a model" />
                     </SelectTrigger>

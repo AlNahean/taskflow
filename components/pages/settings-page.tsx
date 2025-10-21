@@ -12,7 +12,7 @@ import { TaskPriority, TaskCategory } from "@/lib/schemas"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
-import { useSettings, AIModel } from "@/contexts/settings-provider"
+import { useSettings, AIModel, AIFeature } from "@/contexts/settings-provider"
 import { createClientLogger } from "@/lib/logger";
 
 const logger = createClientLogger("SettingsPage");
@@ -21,7 +21,7 @@ export function SettingsPageContent() {
   const { data: tasks = [] } = useTasks() // Use the global context
   const { toast } = useToast()
   const router = useRouter()
-  const { defaultModel, setDefaultModel } = useSettings()
+  const { models, setModelForFeature } = useSettings()
 
   const [defaultPriority, setDefaultPriority] = React.useState<TaskPriority | undefined>(undefined);
   const [defaultCategory, setDefaultCategory] = React.useState<TaskCategory | undefined>(undefined);
@@ -45,10 +45,11 @@ export function SettingsPageContent() {
     toast({ title: "Default category saved!" })
   }
 
-  const handleModelChange = (value: AIModel) => {
-    setDefaultModel(value)
-    toast({ title: "Default AI Model Saved!", description: `Your new default is ${value}.` })
-  }
+  const handleModelChange = (feature: AIFeature, model: AIModel) => {
+    setModelForFeature(feature, model);
+    toast({ title: "AI Model Saved!", description: `The model for ${feature} has been updated.` });
+  };
+
 
   const handleExportData = () => {
     const dataStr = JSON.stringify(tasks, null, 2)
@@ -74,6 +75,13 @@ export function SettingsPageContent() {
     }
   }
 
+  const aiFeatures: { key: AIFeature, label: string }[] = [
+    { key: 'chat', label: 'AI Chat' },
+    { key: 'summary', label: 'Daily Summary' },
+    { key: 'suggestTasks', label: 'Task Suggestion' },
+    { key: 'suggestTitle', label: 'Title Suggestion' },
+  ];
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div>
@@ -94,24 +102,26 @@ export function SettingsPageContent() {
 
         <Card>
           <CardHeader>
-            <CardTitle>AI Settings</CardTitle>
-            <CardDescription>Choose your preferred AI model for chat and generation.</CardDescription>
+            <CardTitle>AI Model Settings</CardTitle>
+            <CardDescription>Choose your preferred AI model for each feature.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label>Default AI Model</Label>
-              <Select onValueChange={handleModelChange} value={defaultModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a default model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                  <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
-                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <CardContent className="space-y-4">
+            {aiFeatures.map(({ key, label }) => (
+              <div key={key} className="space-y-2">
+                <Label>{label} Model</Label>
+                <Select onValueChange={(model: AIModel) => handleModelChange(key, model)} value={models[key]}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                    <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                    <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                    <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
