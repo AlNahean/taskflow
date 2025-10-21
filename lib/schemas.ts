@@ -47,7 +47,8 @@ export const CreateTaskSchema = z.object({
   category: TaskCategory,
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
-  suggestionId: z.string().optional(),
+  // RENAME this field for consistency with the database model
+  suggestedTaskId: z.string().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
@@ -80,5 +81,8 @@ export const SuggestedTaskSchema = z.object({
   dueDate: z.date().nullable(),
   isAdded: z.boolean(),
   noteId: z.string(),
+  createdAt: z.date(), // Add createdAt
+  updatedAt: z.date(), // Add updatedAt
+  createdTask: TaskSchema.nullable().optional(), // Add createdTask relation
 });
 export type SuggestedTask = z.infer<typeof SuggestedTaskSchema>;

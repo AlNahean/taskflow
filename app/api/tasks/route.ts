@@ -28,12 +28,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // The suggestionId is destructured here and the rest of the properties
-    // are collected into 'taskData'.
-    const { suggestionId, ...taskData } = CreateTaskSchema.parse(body);
+    // The data is now parsed directly, including the optional suggestedTaskId
+    const validatedData = CreateTaskSchema.parse(body);
 
     const newTask = await prisma.task.create({
-      data: taskData, // Only taskData is passed to Prisma
+      data: validatedData, // Pass the whole object to Prisma
     });
 
     // Invalidate the cache for pages that display tasks
@@ -51,11 +50,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // This will now catch the Prisma error and other unexpected errors
     console.error("--- [API /tasks POST Error] ---", error);
     return NextResponse.json(
       { error: "Failed to create task", details: error },
-      { status: 500 } // Changed to 500 for server-side errors
+      { status: 500 }
     );
   }
 }

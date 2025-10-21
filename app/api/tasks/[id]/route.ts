@@ -59,18 +59,39 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.task.delete({
-      where: { id: params.id },
+    const taskId = params.id;
+
+    await prisma.$transaction(async (tx) => {
+      // Step 1: Find the task to see if it's linked to a suggestion.
+      const taskToDelete = await tx.task.findUnique({
+        where: { id: taskId },
+        select: { suggestedTaskId: true }, // We only need the ID of the linked suggestion.
+      });
+
+      // Step 2: If it's linked, update the original suggestion to be available again.
+      if (taskToDelete && taskToDelete.suggestedTaskId) {
+        await tx.suggestedTask.update({
+          where: { id: taskToDelete.suggestedTaskId },
+          data: { isAdded: false },
+        });
+      }
+
+      // Step 3: Delete the task itself.
+      await tx.task.delete({
+        where: { id: taskId },
+      });
     });
 
-    // --- THIS IS THE FIX ---
+    // Step 4: Revalidate all relevant paths to update the UI.
     revalidatePath("/");
     revalidatePath("/tasks");
     revalidatePath("/calendar");
     revalidatePath("/analytics");
+    revalidatePath("/notes"); // Ensure note pages reflect the unlinked suggestion.
 
     return new NextResponse(null, { status: 204 }); // No Content
   } catch (error) {
+    console.error("--- [API DELETE /tasks/[id]] Error:", error);
     return NextResponse.json(
       { error: "Failed to delete task" },
       { status: 500 }

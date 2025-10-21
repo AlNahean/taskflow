@@ -63,7 +63,7 @@ export function TaskFormModal() {
       dueDate: taskModalData?.dueDate
         ? new Date(taskModalData.dueDate)
         : new Date(),
-      suggestionId: taskModalData?.suggestionId,
+      suggestedTaskId: taskModalData?.suggestedTaskId,
     };
   };
 
@@ -83,10 +83,10 @@ export function TaskFormModal() {
     createTask(data, {
       onSuccess: async () => {
         closeTaskModal();
-        if (data.suggestionId) {
+        if (data.suggestedTaskId) {
           try {
             const suggestionResponse = await fetch(
-              `/api/suggested-tasks/${data.suggestionId}`,
+              `/api/suggested-tasks/${data.suggestedTaskId}`,
               {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

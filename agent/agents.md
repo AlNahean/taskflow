@@ -1,3 +1,5 @@
+# File: E:/projects/sorties/task-management/task-manager-app/agent/agents.md
+
 # Agent Protocol & System Architecture: Task Management Application
 
 **Version: 3.0**
@@ -102,6 +104,96 @@ Execute these workflows for common development tasks.
     - Implement `onError` to roll back the cache to the snapshot from context if the deletion fails.
     - Implement `onSettled` to invalidate the `['tasks']` query key to ensure the cache is in sync with the server.
 3.  **Event Handler:** The `onClick` handler of the "Delete" button will call the `mutate` function from the `useMutation` hook.
+
+---
+
+## SECTION 4: APPLICATION PAGES & DATA FLOW
+
+This section provides a high-level overview of each page within the application, its primary function, and how it interacts with the central database.
+
+### Core Principle: Centralized Data
+
+The application's state is built around a central database containing two primary models: **`Task`** and **`Note`**. All pages act as different "lenses" or views for this shared data. Due to the use of React Query, a change made on one page (e.g., updating a task) will be automatically and immediately reflected on all other pages that display that same piece of data.
+
+### 1. Today / Dashboard (`/`)
+
+- **Purpose:** The landing page, providing a focused summary of what is relevant _today_.
+- **Functionality:**
+  - Displays a list of tasks where the `dueDate` is the current date.
+  - Features a "Week Calendar" for quick navigation to other days.
+  - Includes an "AI Daily Summary" feature that generates a motivational overview of the day's tasks.
+- **Data Connection:** **Reads** all `Tasks` and filters them on the client to show only today's.
+
+### 2. Tasks (`/tasks`)
+
+- **Purpose:** The main hub for all-encompassing task management.
+- **Functionality:**
+  - Displays the _entire_ list of tasks.
+  - Offers multiple views: a traditional **List**, a visual **Card** grid, and a Kanban-style **Board**.
+  - Includes real-time filtering by search, status, priority, and category.
+  - Allows for direct task manipulation (e.g., drag-and-drop status changes).
+- **Data Connection:** **Reads** all `Tasks` and **Writes** updates or deletions to individual tasks.
+
+### 3. Task Edit Page (`/tasks/[id]`)
+
+- **Purpose:** A dedicated form for modifying a single task.
+- **Functionality:**
+  - Allows editing of all task properties (title, description, dates, status, etc.).
+- **Data Connection:** **Reads** a single `Task` by its ID and **Writes** updates back to it.
+
+### 4. Notes (`/notes`)
+
+- **Purpose:** The entry point for managing long-form text and ideas.
+- **Functionality:**
+  - Displays a grid-based list of all notes.
+  - Allows for the creation of new, empty notes.
+- **Data Connection:** **Reads** all `Notes`.
+
+### 5. Note Detail Page (`/notes/[id]`)
+
+- **Purpose:** The workspace for a single note, acting as the bridge between unstructured ideas and structured tasks.
+- **Functionality:**
+  - Provides a simple editor for the note's content.
+  - Features the "Generate/Update Suggested Tasks" button, which uses AI to parse the note content into actionable `SuggestedTask` items.
+  - Displays these suggestions and allows the user to approve them, which opens the task creation modal.
+- **Data Connection:**
+  - **Reads** a single `Note` and its related `SuggestedTasks`.
+  - **Writes** new `SuggestedTasks` when the AI generation is triggered.
+  - **Creates** a new `Task` when a suggestion is approved, and **updates** the original `SuggestedTask` to link it to the newly created task.
+
+### 6. Calendar (`/calendar`)
+
+- **Purpose:** Provides a traditional monthly calendar view for long-term planning.
+- **Functionality:**
+  - Shows a full month, with indicators on days that have tasks.
+  - Clicking a day displays a list of all tasks due on that date.
+- **Data Connection:** **Reads** all `Tasks` and groups them by `dueDate`.
+
+### 7. Analytics (`/analytics`)
+
+- **Purpose:** Offers data visualization to track productivity.
+- **Functionality:**
+  - Displays high-level stats (e.g., completion rate).
+  - Includes charts for task distribution by status and category.
+- **Data Connection:** **Reads** all `Tasks` and performs aggregations on the client to generate the visualizations.
+
+### 8. Chat (`/chat`)
+
+- **Purpose:** A conversational AI assistant that is aware of the user's data.
+- **Functionality:**
+  - Allows users to ask natural language questions about their tasks and notes.
+  - Supports multiple AI models.
+- **Data Connection:** **Reads all `Tasks` and `Notes`** to provide context to the AI for answering user queries. It does not write any data.
+
+### 9. Settings (`/settings`)
+
+- **Purpose:** A central location for user preferences and data management.
+- **Functionality:**
+  - Theme selection (Light/Dark mode).
+  - Setting default values for new tasks and the default AI model.
+  - Exporting all user data to JSON.
+  - Deleting all user data from the database.
+- **Data Connection:** Primarily interacts with browser `localStorage` for preferences. The "Delete All" function **writes** a delete command for all `Tasks` and `Notes` in the database.
 
 ---
 
