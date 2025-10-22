@@ -1,3 +1,4 @@
+// File: lib/schemas.ts
 import { z } from "zod";
 
 // --- SubTask Schemas ---
@@ -18,8 +19,8 @@ const CreateSubTaskSchema = z.object({
 
 const UpdateSubTaskSchema = z.object({
   id: z.string().optional(), // Will be present for existing sub-tasks
-  text: z.string().min(1, "Sub-task text cannot be empty"),
-  completed: z.boolean(), // Make completed a required boolean
+  text: z.string().optional(),
+  completed: z.boolean(),
 });
 
 // Task Status
@@ -58,7 +59,7 @@ export const TaskSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   starred: z.boolean(),
-  suggestedTaskId: z.string().nullable(),
+  suggestedTaskId: z.string().nullable().optional(),
   subtasks: z.array(SubTaskSchema).optional(), // Add subtasks relation
 });
 export type Task = z.infer<typeof TaskSchema>;
@@ -66,14 +67,14 @@ export type Task = z.infer<typeof TaskSchema>;
 // Create Task Input
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
-  description: z.string().max(1000).nullable().optional(),
+  description: z.string().max(1000).optional(),
   status: TaskStatus,
   priority: TaskPriority,
   category: TaskCategory,
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
   starred: z.boolean().optional(),
-  suggestedTaskId: z.string().optional(),
+  suggestedTaskId: z.string().nullable().optional(),
   subtasks: z.array(CreateSubTaskSchema).optional(), // Add subtasks for creation
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;

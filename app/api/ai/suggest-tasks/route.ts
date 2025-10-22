@@ -19,7 +19,15 @@ function formatExistingTasksForAI(tasks: { title: string }[]): string {
   );
 }
 
-// Zod schema for validating the AI's output, now including subtasks
+const validCategories = [
+  "work",
+  "personal",
+  "shopping",
+  "health",
+  "other",
+] as const;
+
+// Zod schema for validating the AI's output, now including subtasks and category sanitization
 const AISuggestedTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().max(1000).nullable().optional(),
@@ -28,8 +36,15 @@ const AISuggestedTaskSchema = z.object({
     .default("todo"),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   category: z
-    .enum(["work", "personal", "shopping", "health", "other"])
-    .default("personal"),
+    .string()
+    .transform((val) => {
+      const lowerVal = val.toLowerCase().replace(" ", "-");
+      if (validCategories.includes(lowerVal as any)) {
+        return lowerVal as (typeof validCategories)[number];
+      }
+      return "other";
+    })
+    .pipe(z.enum(validCategories)),
   startDate: z
     .string()
     .transform((val, ctx) => new Date(val))
@@ -90,7 +105,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // --- ENHANCEMENT: Fetch existing suggestions to provide context to the AI ---
     const existingSuggestions = await prisma.suggestedTask.findMany({
       where: { noteId: noteId },
       select: { title: true },
@@ -102,14 +116,14 @@ export async function POST(req: Request) {
       You MUST adhere to the following rules:
       1.  Your entire response MUST be a single, valid JSON object: { "tasks": [...] }.
       2.  Each task object must contain "title", "description", "status", "priority", "category", "startDate", "dueDate", and an optional "subtasks" array.
-      3.  If a task can be broken down into smaller, concrete steps, add them to the "subtasks" array. Each subtask should be an object like {"text": "Step description"}.
-      4.  'status' must always be "todo".
-      5.  CRITICAL: A list of existing suggestions is provided. Identify ONLY NEW tasks from the user's note that are NOT in this list. If no new tasks are found, return an empty "tasks" array.
+      3.  The category MUST be one of the following lowercase strings: "work", "personal", "shopping", "health", "other".
+      4.  If a task can be broken down into smaller, concrete steps, add them to the "subtasks" array. Each subtask should be an object like {"text": "Step description"}.
+      5.  'status' must always be "todo".
+      6.  CRITICAL: A list of existing suggestions is provided. Identify ONLY NEW tasks from the user's note that are NOT in this list. If no new tasks are found, return an empty "tasks" array.
 
       ${existingTasksContext}
       `;
 
-    // Provide the current date to the AI for accurate relative date calculation
     const userPromptWithDateContext = `Based on the current date of ${new Date().toISOString()}, analyze the following note:\n\n---\n\n${prompt}`;
 
     const response = await openai.chat.completions.create({
@@ -120,7 +134,7 @@ export async function POST(req: Request) {
       ],
       temperature: 0.3,
       max_tokens: 1500,
-      response_format: { type: "json_object" }, // Enable JSON mode
+      response_format: { type: "json_object" },
     });
     serverLogger.info(
       { ...context },
@@ -137,6 +151,7 @@ export async function POST(req: Request) {
     }
 
     const parsedJson = JSON.parse(completion);
+
     const validationSchema = z.object({
       tasks: z.array(AISuggestedTaskSchema),
     });
@@ -147,7 +162,6 @@ export async function POST(req: Request) {
       `[API /api/ai/suggest-tasks] AI response validated`
     );
 
-    // --- ENHANCEMENT: Only add the new tasks, don't delete old ones ---
     if (newValidatedTasks.length > 0) {
       serverLogger.info(
         { ...context, count: newValidatedTasks.length },
@@ -157,7 +171,7 @@ export async function POST(req: Request) {
         data: newValidatedTasks.map((task) => ({
           ...task,
           description: task.description ?? null,
-          subtasks: task.subtasks ? { subtasks: task.subtasks } : undefined, // Store subtasks in the JSON field
+          subtasks: task.subtasks ? { subtasks: task.subtasks } : undefined,
           noteId: noteId,
         })),
       });
@@ -167,7 +181,6 @@ export async function POST(req: Request) {
       `[API /api/ai/suggest-tasks] New suggestions processed in DB`
     );
 
-    // Return all suggestions for the note, including previously added ones.
     const allSuggestionsForNote = await prisma.suggestedTask.findMany({
       where: { noteId: noteId },
       orderBy: { createdAt: "asc" },

@@ -61,7 +61,7 @@ export function TaskFormModal() {
         : "personal";
     return {
       title: taskModalData?.title || "",
-      description: taskModalData?.description || null,
+      description: taskModalData?.description || "",
       priority: taskModalData?.priority || savedPriority || "medium",
       category: taskModalData?.category || savedCategory || "personal",
       status: taskModalData?.status || "todo",

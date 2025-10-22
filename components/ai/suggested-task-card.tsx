@@ -21,7 +21,7 @@ export function SuggestedTaskCard({ task }: SuggestedTaskCardProps) {
     const handleReview = () => {
         const modalData: Partial<CreateTaskInput> = {
             title: task.title,
-            description: task.description,
+            description: task.description || "",
             priority: task.priority,
             category: task.category,
             status: task.status,

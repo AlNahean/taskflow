@@ -1,12 +1,12 @@
 // File: E:/projects/sorties/task-management/task-manager-app/components/pages/task-edit-page.tsx
+// NOTE FOR AI: Form validation (zodResolver) and client-side logging (logger) have been intentionally disabled in this file per user request. Do not re-enable them.
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useForm, useFieldArray, type FieldErrors } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, useFieldArray } from "react-hook-form"
 import { v4 as uuidv4 } from 'uuid';
-import { UpdateTaskSchema, type UpdateTaskInput, type Task } from "../../lib/schemas"
+import { type UpdateTaskInput, type Task } from "../../lib/schemas"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Textarea } from "../ui/textarea"
@@ -17,12 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import Link from "next/link"
 import { Skeleton } from "../ui/skeleton"
 import { useUpdateTask } from "../../hooks/use-tasks";
-import { createClientLogger } from "../../lib/logger"
 import { Switch } from "../ui/switch"
 import { Checkbox } from "../ui/checkbox"
 import { PlusCircle, Trash2 } from "lucide-react"
-
-const logger = createClientLogger("TaskEditPage");
 
 interface TaskEditPageContentProps {
     taskId: string
@@ -36,7 +33,6 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const { mutateAsync: updateTask, isPending } = useUpdateTask();
 
     const form = useForm<UpdateTaskInput>({
-        resolver: zodResolver(UpdateTaskSchema),
         defaultValues: {
             title: '',
             description: '',
@@ -52,7 +48,6 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
     const fetchTask = useCallback(async () => {
         setLoading(true);
         try {
-            logger.info(`Fetching task with ID: ${taskId}`);
             const response = await fetch(`/api/tasks/${taskId}`);
             if (!response.ok) throw new Error("Task not found");
             const data = await response.json();
@@ -69,9 +64,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                 description: parsedTask.description ?? "",
                 subtasks: parsedTask.subtasks?.map(st => ({ id: st.id, text: st.text, completed: !!st.completed })) || [],
             });
-            logger.info("Successfully fetched and parsed task.", { task: parsedTask });
         } catch (error) {
-            logger.error("Failed to load task.", { error });
             toast({ variant: "destructive", title: "Error", description: "Failed to load task." });
             setTask(null);
         } finally {
@@ -83,24 +76,18 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
         fetchTask();
     }, [fetchTask]);
 
-    const onInvalid = (errors: FieldErrors<UpdateTaskInput>) => {
-        logger.error("Form validation failed", { errors });
-        toast({
-            variant: "destructive",
-            title: "Validation Error",
-            description: "Please check the form for errors. See console for details.",
-        });
-    };
-
-
     const onSubmit = async (data: UpdateTaskInput) => {
-        logger.info("Form submitted. Calling updateTask mutation.", { taskId, data });
+        // Filter out empty subtasks before submitting
+        const cleanedData = {
+            ...data,
+            subtasks: data.subtasks?.filter(st => st.text && st.text.trim().length > 0)
+        };
+
         try {
-            await updateTask({ id: taskId, ...data });
-            logger.info("updateTask mutation successful. Navigating to /tasks.");
+            await updateTask({ id: taskId, ...cleanedData });
             router.push("/tasks");
         } catch (error) {
-            logger.error("updateTask mutation failed in component.", { error });
+            // Error toast is handled by the useUpdateTask hook
         }
     };
 
@@ -144,7 +131,7 @@ export function TaskEditPageContent({ taskId }: TaskEditPageContentProps) {
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
                                 control={form.control}
                                 name="title"
