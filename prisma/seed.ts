@@ -12,7 +12,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(`Start seeding ...`);
 
-  // Clear existing data from both tables
+  // Clear existing data
+  await prisma.subTask.deleteMany();
+  console.log("Deleted existing subtasks.");
+  await prisma.suggestedTask.deleteMany();
+  console.log("Deleted existing suggested tasks.");
   await prisma.note.deleteMany();
   console.log("Deleted existing notes.");
   await prisma.task.deleteMany();
@@ -62,6 +66,11 @@ async function main() {
       priority: TaskPriority.high,
       category: TaskCategory.work,
       daysFromNow: 5,
+      subtasks: [
+        { text: "Compile sales data", completed: true },
+        { text: "Draft executive summary", completed: false },
+        { text: "Review with finance team", completed: false },
+      ],
     },
     {
       title: "Prepare for team meeting",
@@ -83,6 +92,11 @@ async function main() {
       priority: TaskPriority.medium,
       category: TaskCategory.work,
       daysFromNow: 10,
+      subtasks: [
+        { text: "Set up hardware", completed: true },
+        { text: "Grant system access", completed: true },
+        { text: "Schedule team introductions", completed: false },
+      ],
     },
     {
       title: "Update client on project status",
@@ -146,6 +160,11 @@ async function main() {
       priority: TaskPriority.high,
       category: TaskCategory.work,
       daysFromNow: 3,
+      subtasks: [
+        { text: "Gather Q3 metrics", completed: true },
+        { text: "Create slide deck", completed: false },
+        { text: "Rehearse presentation", completed: false },
+      ],
     },
     {
       title: "Follow up with potential clients",
@@ -246,6 +265,11 @@ async function main() {
       priority: TaskPriority.medium,
       category: TaskCategory.personal,
       daysFromNow: 2,
+      subtasks: [
+        { text: "Clean the kitchen", completed: false },
+        { text: "Vacuum the floors", completed: false },
+        { text: "Wipe down bathroom", completed: false },
+      ],
     },
     {
       title: "Watch a documentary",
@@ -288,6 +312,11 @@ async function main() {
       priority: TaskPriority.high,
       category: TaskCategory.personal,
       daysFromNow: 40,
+      subtasks: [
+        { text: "Create guest list", completed: true },
+        { text: "Book venue", completed: false },
+        { text: "Send invitations", completed: false },
+      ],
     },
     {
       title: "Backup computer files",
@@ -346,6 +375,12 @@ async function main() {
       priority: TaskPriority.medium,
       category: TaskCategory.shopping,
       daysFromNow: 0,
+      subtasks: [
+        { text: "Milk", completed: false },
+        { text: "Eggs", completed: false },
+        { text: "Bread", completed: false },
+        { text: "Chicken", completed: false },
+      ],
     },
     {
       title: "Order new running shoes",
@@ -516,6 +551,11 @@ async function main() {
       priority: TaskPriority.medium,
       category: TaskCategory.health,
       daysFromNow: 0,
+      subtasks: [
+        { text: "Chop vegetables", completed: true },
+        { text: "Cook chicken breast", completed: false },
+        { text: "Portion into containers", completed: false },
+      ],
     },
     {
       title: "Yoga session",
@@ -637,6 +677,10 @@ async function main() {
       priority: TaskPriority.high,
       category: TaskCategory.other,
       daysFromNow: 11,
+      subtasks: [
+        { text: "Oil change", completed: false },
+        { text: "Tire rotation", completed: false },
+      ],
     },
     {
       title: "Attend community meeting",
@@ -756,6 +800,11 @@ async function main() {
         category: task.category,
         startDate: startDate,
         dueDate: dueDate,
+        subtasks: task.subtasks
+          ? {
+              create: task.subtasks,
+            }
+          : undefined,
       },
     });
   }
