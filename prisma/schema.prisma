@@ -11,43 +11,22 @@ datasource db {
 }
 
 model Task {
-    id          String       @id @default(uuid())
+    id          String   @id @default(uuid())
     title       String
     description String?
-    status      TaskStatus   @default(todo)
-    priority    TaskPriority @default(medium)
-    category    TaskCategory @default(personal)
-    startDate   DateTime     @default(now())
+    status      String   @default("todo") // Changed from enum to String
+    priority    String   @default("medium") // Changed from enum to String
+    category    String   @default("personal") // Changed from enum to String
+    startDate   DateTime @default(now())
     dueDate     DateTime
-    createdAt   DateTime     @default(now())
-    updatedAt   DateTime     @updatedAt
-    starred     Boolean      @default(false)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    starred     Boolean  @default(false)
 
     suggestedTaskId String?        @unique
     suggestion      SuggestedTask? @relation(fields: [suggestedTaskId], references: [id])
 
     subtasks SubTask[] // Relation to SubTasks
-}
-
-enum TaskStatus {
-    todo
-    in_progress
-    completed
-    overdue
-}
-
-enum TaskPriority {
-    low
-    medium
-    high
-}
-
-enum TaskCategory {
-    work
-    personal
-    shopping
-    health
-    other
 }
 
 model Note {
@@ -60,18 +39,18 @@ model Note {
 }
 
 model SuggestedTask {
-    id          String       @id @default(uuid())
+    id          String    @id @default(uuid())
     title       String
     description String?
-    status      TaskStatus   @default(todo)
-    priority    TaskPriority @default(medium)
-    category    TaskCategory @default(personal)
+    status      String    @default("todo") // Changed from enum to String
+    priority    String    @default("medium") // Changed from enum to String
+    category    String    @default("personal") // Changed from enum to String
     startDate   DateTime?
     dueDate     DateTime?
-    isAdded     Boolean      @default(false)
-    createdAt   DateTime     @default(now())
-    updatedAt   DateTime     @updatedAt
-    subtasks    Json? // Store suggested subtasks as JSON
+    isAdded     Boolean   @default(false)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    subtasks    String? // Changed from Json to String - store JSON as text
 
     noteId String
     note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
